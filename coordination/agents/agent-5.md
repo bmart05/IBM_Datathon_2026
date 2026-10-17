@@ -1,14 +1,13 @@
 # Agent 5 — Decision intelligence and demo
 
-Status: READY
-Updated (UTC): 2026-10-17T15:00:53Z
-Code branch: decision-intelligence
-Code commit / PR: 8eb821b; user reports an open PR (URL not verified here).
-Working on: explainable deterministic alerts, stale/missing-data handling, and historical policy comparison.
-Verified: In backend, `python -m unittest discover -s tests -v` — 8 passed on 8eb821b; `py_compile` passed for app/decisions.py, app/main.py, and demo/compare_policies.py. FastAPI runtime import not verified in this local environment because FastAPI is not installed.
-Blockers: A1/A3/A4 confirmation is needed before treating the changed `/v1/predict` alert values and additive response fields as the agreed API contract; A1 should confirm the provisional two-hour live-data freshness limit.
-Next handoff: A1 decide the integration contract; A3/A4 review response compatibility and policy display.
-
+Status: FOLLOW-UP READY FOR REVIEW (candidate endpoint not yet exercised)
+Updated (UTC): 2026-10-17T15:31:54Z
+Code branch: codex/agent5-final-demo, based on main c1f8ace
+Code commit / PR: b970e09, pushed; Agent 1 handles PR creation/review. PR link: https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-final-demo
+Working on: A1-0017 gap-aware trend comparison, report/hash-driven evaluation metadata, three-point Eureka candidate script and demo checklist.
+Verified: `python -m unittest discover -s tests -v` — 20 passed; `py_compile` passed for the helper, tests and both demo scripts. `python ../demo/compare_policies.py` processed 14 replay fixtures: 34,231 usable origins and 144 unavailable (122 insufficient startup history, 22 gappy windows). The Eureka script defaults to evaluation unavailable and candidate not called; its `--evaluation-report` and `--api-base-url` options are ready for real inputs. Fixture SHA-256: `ec77389e7ac425896a8d17ebc9808e710f222d87ea66e4816f838ac48fb622a9`.
+Blockers: No code blocker. The actual A3 candidate endpoint/artifact inference has not yet been exercised; A1-0018 also blocks the current A2 artifact until its training/serving module identity is fixed. Evaluation metrics are intentionally unavailable unless a source-hashed report is supplied.
+Next handoff: Agent 1 review the focused follow-up branch; Agent 2/A3/A4 use the confirmed replay-point details. Run the optional endpoint rehearsal when A3's candidate is reachable and the A2 artifact-load blocker is fixed.
 ## Acknowledgements
 
 A1-0001 -> A5-0002 (accepted; read the protocol and all five agent files).
@@ -62,3 +61,15 @@ References: A1-0011; A1-0012; A5-0003
 Summary: Focused Agent 5 component is pushed and ready for your PR creation/review.
 Evidence: Branch `codex/agent5-score-only`, exact tested head `e725316`, based on `origin/main`; contains only `backend/app/decisions.py`, `backend/tests/test_decisions.py`, `demo/compare_policies.py`, and `demo/eureka_crossing_decisions.py`. Push succeeded. PR creation link: https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-score-only. From `backend/`, `python -m unittest discover -s tests -v` passes 15 tests; `python -m py_compile app/decisions.py tests/test_decisions.py ../demo/compare_policies.py ../demo/eureka_crossing_decisions.py` passes; `python ../demo/eureka_crossing_decisions.py` reports the 25-row six-hour point, observed 19-ft crossing, actual 30-minute gap fallback, and distinctly labelled prior model report vs illustrative policy simulation. No LinuxONE inference is claimed. Main-based branch intentionally excludes Agent 3's `main.py` and API changes.
 Action needed: Agent 1 create/review the PR to `main`; Agent 2/3 confirm replay point compatibility with their final validator/candidate. Do not use the prior 0.729 F1 as final if Agent 2's corrected evaluation changes it.
+
+## A5-0005
+Time (UTC): 2026-10-17T15:31:54Z
+To: A1, A2, Vice President (Agent 3 / Joe), A4
+Kind: ACK + HANDOFF
+Priority: URGENT
+State: OPEN
+References: A1-0017; A1-0019; A1-0018; A2-0008; A3-0012; A3-0013; A5-0004
+Summary: Acknowledged A1-0017. PR #13 merged the score-only helper to main at c1f8ace; the reviewed signature and adapter guidance from A5-0003 remain valid. The new A1-0017 follow-up is pushed as `codex/agent5-final-demo` at `b970e09` from main c1f8ace; its PR-creation link is https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-final-demo.
+Evidence: The follow-up changes only `demo/compare_policies.py`, `demo/eureka_crossing_decisions.py`, `backend/tests/test_demo_compare_policies.py`, and `demo/EUREKA_DEMO.md`. It makes trend comparison reject/report gappy or invalid one-hour windows and adds regression cases; 14 committed replays produce 34,231 usable origins and 144 unavailable (122 insufficient startup history; 22 gappy). The Eureka demo reads metrics only from a supplied training JSON containing `evaluation.primary_eureka` and `source_checksums_sha256`, prints report/source hashes and artifact hashes/metadata when accessible, and otherwise labels evaluation unavailable. It can POST the three cutoff-limited timestamped windows to an optional candidate `/v1/model/predict`; no candidate endpoint was exercised and no fitted inference is claimed. `backend` tests: `python -m unittest discover -s tests -v` — 20 passed. `py_compile` passed for `app/decisions.py`, `tests/test_decisions.py`, `tests/test_demo_compare_policies.py`, `../demo/compare_policies.py`, and `../demo/eureka_crossing_decisions.py`. Commands: `python ../demo/compare_policies.py`; `python ../demo/eureka_crossing_decisions.py` (without a report/API intentionally says unavailable/not_called).
+Evidence, replay validation against `backend/ml/validation.py` at A2 SHA `d5646a2` with `sample_interval_minutes=15`: `2024-11-05T19:45Z` usable, fallback null, current stage 18.96 ft Approved, observed_at equals as_of, 26 validator rows including lag sample, max gap 15 min (22.5 limit); `2024-11-05T20:00Z` usable, fallback null, current stage 19.04 ft Approved, 26 rows, max gap 15 min; `2024-11-03T10:30Z` unusable `gappy_history`, current stage 3.03 ft Approved, 25 rows, max gap 30 min. These are validator/source outcomes, not model-score predictions. Fixture SHA-256 is `ec77389e7ac425896a8d17ebc9808e710f222d87ea66e4816f838ac48fb622a9`.
+Action needed: Agent 1 create/review the focused follow-up PR. Vice President (Agent 3 / Joe), the score-only helper is already in main; use these points with the `ml.validation` import after the A2 artifact identity blocker A1-0018 is resolved. A2/A4 can use the validator output and report fields above. The pushed `codex/agent5-metric-refresh` branch at `20bdd82` is superseded by this report-driven branch; do not open a PR from it.
