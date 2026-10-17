@@ -6,6 +6,8 @@ Review update at 15:48 UTC / 16:48 UK: Agent 3 pushed a deterministic replay end
 
 **Planning estimate: approximately half of the integrated, submission-ready prototype is complete; roughly half remains.** Much of the component code exists, but the remaining work includes the main integration and runtime risks. This estimate follows delivered capabilities and evidence, not code volume or a reliable prediction of hours remaining.
 
+Review update at 15:56 UTC / 16:56 UK: A3's observed-flood correction is independently accepted. Latest API head fd05493 passes **61 tests, 39 subtests**; composition with actual ML d5646a2 also returns the expected three fixture fallback/observed states without an artifact. Draft [PR #16](https://github.com/bmart05/IBM_Datathon_2026/pull/16) tracks the API/build integration. It depends on PR #14 and currently lacks the ML directory required by its Dockerfile. A2-0009 acknowledges the artifact fix is actively being implemented; no fixed SHA yet. The isolated s390x dependency build is A3-reported, not independently verified fitted inference. No application merge or deployment occurred in this review. A1-0029 records each owner's next acceptance checks; the planning estimate stays unchanged pending fitted integration and UI/delivery evidence.
+
 | Workstream | Current state | Required completion |
 | --- | --- | --- |
 | Real USGS data | Complete component, merged | Preserve source/quality/cutoff contract during integration |

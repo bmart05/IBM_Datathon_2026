@@ -1,14 +1,16 @@
 # Agent 5 — Decision intelligence and demo
 
-Status: FOLLOW-UP READY FOR REVIEW (candidate endpoint not yet exercised)
-Updated (UTC): 2026-10-17T15:31:54Z
-Code branch: codex/agent5-final-demo, based on main c1f8ace
-Code commit / PR: b970e09, pushed; Agent 1 handles PR creation/review. PR link: https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-final-demo
-Working on: A1-0017 gap-aware trend comparison, report/hash-driven evaluation metadata, three-point Eureka candidate script and demo checklist.
-Verified: `python -m unittest discover -s tests -v` — 20 passed; `py_compile` passed for the helper, tests and both demo scripts. `python ../demo/compare_policies.py` processed 14 replay fixtures: 34,231 usable origins and 144 unavailable (122 insufficient startup history, 22 gappy windows). The Eureka script defaults to evaluation unavailable and candidate not called; its `--evaluation-report` and `--api-base-url` options are ready for real inputs. Fixture SHA-256: `ec77389e7ac425896a8d17ebc9808e710f222d87ea66e4816f838ac48fb622a9`.
-Blockers: No code blocker. The actual A3 candidate endpoint/artifact inference has not yet been exercised; A1-0018 also blocks the current A2 artifact until its training/serving module identity is fixed. Evaluation metrics are intentionally unavailable unless a source-hashed report is supplied.
-Next handoff: Agent 1 review the focused follow-up branch; Agent 2/A3/A4 use the confirmed replay-point details. Run the optional endpoint rehearsal when A3's candidate is reachable and the A2 artifact-load blocker is fixed.
+Status: STRICT CANDIDATE REHEARSAL IMPLEMENTED; A1 REVIEW / REAL CANDIDATE PENDING
+Updated (UTC): 2026-10-17T15:56:25Z
+Code branch: codex/agent5-strict-rehearsal, based on current main 8e64a37
+Code commit / PR: ba7a7ff, pushed; Agent 1 handles PR creation/review. PR link: https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-strict-rehearsal
+Working on: Completed A1-0025 strict pass/fail mode for the three Eureka candidate scenarios; ready to run it once A3 provides a loaded candidate endpoint.
+Verified: From `backend/`, `python -m unittest discover -s tests -v` — 24 passed, including four mocked strict-check cases. `python -m py_compile ../demo/eureka_crossing_decisions.py tests/test_demo_compare_policies.py` and `git diff --check` passed. The strict mode checks HTTP 200, finite below-threshold score, no fallback, loaded model name/version, matching `as_of` and `observed_at`, uncalibrated/human-review flags, measured `threshold_exceeded`, and gappy null-score/unavailable/fallback behavior. Reporting-only mode still preserves raw responses.
+Blockers: No local code blocker. A3's latest handoff says the model route is not loaded and no candidate URL/inference is ready; A2's fresh-process artifact identity issue remains unresolved. Therefore the three-point strict check has not been run against a real candidate, and no fitted inference or deployment is claimed.
+Next handoff: Agent 1 review the focused branch and assign next steps. A3, provide a loaded candidate URL plus code/artifact identity when available; then run and save the strict three-point response report. Previous A1-0017 demo follow-up was merged in PR #15.
 ## Acknowledgements
+
+A1-0025 -> A5-0006 (strict-candidate rehearsal implemented and pushed; actual candidate check pending A3 runtime).
 
 A1-0001 -> A5-0002 (accepted; read the protocol and all five agent files).
 A1-0005 -> A5-0002 (answered; documented policy names, stage-threshold separation, human review, missing-data behavior and evidence).
@@ -73,3 +75,16 @@ Summary: Acknowledged A1-0017. PR #13 merged the score-only helper to main at c1
 Evidence: The follow-up changes only `demo/compare_policies.py`, `demo/eureka_crossing_decisions.py`, `backend/tests/test_demo_compare_policies.py`, and `demo/EUREKA_DEMO.md`. It makes trend comparison reject/report gappy or invalid one-hour windows and adds regression cases; 14 committed replays produce 34,231 usable origins and 144 unavailable (122 insufficient startup history; 22 gappy). The Eureka demo reads metrics only from a supplied training JSON containing `evaluation.primary_eureka` and `source_checksums_sha256`, prints report/source hashes and artifact hashes/metadata when accessible, and otherwise labels evaluation unavailable. It can POST the three cutoff-limited timestamped windows to an optional candidate `/v1/model/predict`; no candidate endpoint was exercised and no fitted inference is claimed. `backend` tests: `python -m unittest discover -s tests -v` — 20 passed. `py_compile` passed for `app/decisions.py`, `tests/test_decisions.py`, `tests/test_demo_compare_policies.py`, `../demo/compare_policies.py`, and `../demo/eureka_crossing_decisions.py`. Commands: `python ../demo/compare_policies.py`; `python ../demo/eureka_crossing_decisions.py` (without a report/API intentionally says unavailable/not_called).
 Evidence, replay validation against `backend/ml/validation.py` at A2 SHA `d5646a2` with `sample_interval_minutes=15`: `2024-11-05T19:45Z` usable, fallback null, current stage 18.96 ft Approved, observed_at equals as_of, 26 validator rows including lag sample, max gap 15 min (22.5 limit); `2024-11-05T20:00Z` usable, fallback null, current stage 19.04 ft Approved, 26 rows, max gap 15 min; `2024-11-03T10:30Z` unusable `gappy_history`, current stage 3.03 ft Approved, 25 rows, max gap 30 min. These are validator/source outcomes, not model-score predictions. Fixture SHA-256 is `ec77389e7ac425896a8d17ebc9808e710f222d87ea66e4816f838ac48fb622a9`.
 Action needed: Agent 1 create/review the focused follow-up PR. Vice President (Agent 3 / Joe), the score-only helper is already in main; use these points with the `ml.validation` import after the A2 artifact identity blocker A1-0018 is resolved. A2/A4 can use the validator output and report fields above. The pushed `codex/agent5-metric-refresh` branch at `20bdd82` is superseded by this report-driven branch; do not open a PR from it.
+
+## A5-0006
+Time (UTC): 2026-10-17T15:56:25Z
+To: A1, A2, Vice President (Agent 3 / Joe), A4
+Kind: HANDOFF + NEXT-STEP REQUEST
+Priority: URGENT
+State: OPEN
+References: A1-0025; A1-0026; A1-0027; A1-0018; A3-0016
+Summary: Implemented and pushed the strict candidate rehearsal mode on a focused current-main branch; it fails closed when the candidate is unreachable, returns errors, or violates any of the three agreed scenario contracts.
+Evidence: Branch `codex/agent5-strict-rehearsal`, based on main `8e64a37`, commit `ba7a7ff`; push succeeded. PR creation link: https://github.com/bmart05/IBM_Datathon_2026/pull/new/codex/agent5-strict-rehearsal. `python -m unittest discover -s tests -v` from `backend/` — 24 passed, including 4 mocked strict-candidate cases; `py_compile` passed for the changed script/tests; `git diff --check` passed. `--strict-candidate-check` requires `--api-base-url`, checks all three scenarios and exits nonzero on any failure. It verifies finite model score, fallback, loaded name/version, exact `as_of`/`observed_at`, uncalibrated and human-review flags, observed measured threshold state, and gappy null score/state/reason. `demo/EUREKA_DEMO.md` documents the invocation.
+Limitations: A3's latest handoff says no loaded model candidate is available; A2's A1-0018 serialization import blocker remains independent. I did not run endpoint inference or claim deployment. Strict-mode expected-success mocked responses validate the checker only, not model behavior.
+Action needed: Agent 1 review this branch and advise next steps. Vice President (Agent 3 / Joe), provide the actual candidate URL and code/artifact identity once runtime/model loading is ready; Agent 5 will then run the three-point strict rehearsal and save the raw report.
+Request: A1: my task is complete; what are my next steps?
