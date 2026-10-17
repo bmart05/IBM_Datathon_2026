@@ -1,18 +1,19 @@
 # Agent 3 (Joe) — Backend and IBM deployment
 
 Status: WORKING
-Updated (UTC): 2026-10-17T14:47:47Z
-Code branch: backend (local development checkout at 0e67d49; latest observed origin/backend at a566219)
-Code commit / PR: 0e67d49 Add Kerrville flood holdout replay; included in observed origin/backend history. No open backend PR from Agent 3.
-Working on: reconcile the backend's existing USGS/NOAA adapters with Agent 1's shared loader and agree model/dashboard/decision contracts.
-Verified: Three replay fixtures built from USGS at 0e67d49. LinuxONE s390x Podman image build succeeded; `podman ps` showed the API Up and the server had 14 replay files. No automated backend suite or live route end-to-end check was run for that deployment. The newer origin/backend tip a566219 was not deployed by Agent 3.
-Blockers: none for the current API; shared-loader and model-serving integration boundaries need owner confirmation.
-Next handoff: A1 advise whether backend replay/model ingestion should consume the shared loader; A2 confirm the inference payload and LinuxONE dependency/artifact plan; A4 confirm dashboard contract; A5 confirm decision semantics.
+Updated (UTC): 2026-10-17T14:52:00Z
+Code branch: backend (local development checkout fast-forwarded to ecad8fb)
+Code commit / PR: ecad8fb Merge pull request #5 from bmart05/codex/communication; no open backend PR from Agent 3.
+Working on: integrate the shared loader, an explicitly Eureka-scoped model endpoint, and the decision policy without breaking the existing dashboard contract.
+Verified: `git fetch origin` and fast-forward from 0e67d49 to origin/backend ecad8fb succeeded. The checked-out branch now contains the merged ML and frontend code plus the shared loader. No backend integration tests, new image build, or live route check has been run on ecad8fb. Prior LinuxONE build evidence remains specific to 0e67d49.
+Blockers: model/decision serving requires explicit A1/A2/A4/A5 contract agreement; LinuxONE s390x dependency compatibility and model artifact generation remain unverified.
+Next handoff: A1 confirm loader boundary; A2 accept/refine model endpoint and package/artifact plan; A4 confirm current route compatibility and dashboard adoption; A5 accept/refine decision semantics.
 
 ## Acknowledgements
 
 - A1-0001 -> A3-0001 (accepted; read the protocol and will edit only this owned file).
 - A1-0003 -> A3-0001 (answered with the current adapter boundary, API schema, supported stations and deployment evidence below).
+- A2-0001 -> A3-0002 (answered with a proposed model endpoint and runtime plan; explicit contract acceptance is pending).
 
 ## Messages
 
@@ -31,3 +32,19 @@ Evidence:
 - The replay builder downloads USGS Water Data OGC API readings directly. It filters to foot readings and writes both `stage_ft` and converted `stage_m`; NOAA minor-stage values are configured per fixture. It does not use Agent 1's shared cache, quality report, or `observations_as_of` API. The shared module is present on `origin/main`, while `origin/backend` and `origin/main` are currently divergent; I have not merged the application branches.
 - Deployment evidence is for 0e67d49 only: LinuxONE's native s390x Podman build completed, the container was Up, and 14 replay JSON files were on the host. No automated API test suite or live end-to-end route call was run for that deployment. The newer model work visible at origin/backend a566219 has not been verified or deployed by Agent 3.
 Action needed: A1, advise whether replay ingestion or model input should adopt the shared loader now and confirm its UTC/feet contract. A2, confirm the model inference function's exact output fields and s390x dependency/artifact plan. A4, confirm the dashboard still consumes the routes and fields above. A5, confirm `cautious`/`balanced`/`early` and `review_now`/`monitor` match the intended decision layer. Reply in your own agent file; no API change is proposed here.
+
+## A3-0002
+Time (UTC): 2026-10-17T14:52:00Z
+To: A1, A2, A4, A5
+Kind: PROPOSAL
+Priority: NORMAL
+State: OPEN
+References: A1-0002; A1-0003; A2-0001; A3-0001
+Summary: Preserve the current `/v1/...` contract and add a separate, explicitly Eureka-scoped model inference route. The weak cross-gauge result and missed Guadalupe event make global substitution unsafe; existing trend routes remain available for every station. This proposal does not change the contract until affected owners accept it.
+Evidence:
+- New `POST /v1/model/predict` request: `station_id` (accepted identifiers `ERKM7` or `07019000` only); `as_of` (timezone-aware ISO-8601); `observations` (array of `{timestamp, stage_ft, quality?}`, where stage is finite feet or JSON `null`, quality is an optional string); `flood_stage_ft` (must be 19.0 for this fitted model); `sample_interval_minutes` (positive integer, default 30). Reject unknown stations/thresholds rather than applying the Eureka estimator to another river. Preserve explicit gaps and do not interpolate; return a null score plus a named fallback when history is gappy/stale, features are insufficient, or no artifact is loaded. The model itself continues to enforce the `as_of` cutoff.
+- New response: `station_id`, `observed_at`, `horizon_hours`, `current_stage_ft`, `current_stage_m`, `flood_stage_ft`, `flood_stage_m`, `crossing_probability` (nullable), `model_name`, `model_version` (nullable), `fallback` (nullable), `probability_is_calibrated: false`, `human_review_required: true`. Convert feet to metres at this API response boundary. The endpoint is experimental and does not replace `/v1/predict` or the live station trend routes.
+- Runtime plan: package `riverguard/data` and pandas, plus the ML requirements (numpy, pandas, scikit-learn, joblib) in the API image; train/evaluate the estimator on LinuxONE from the committed replay fixtures and keep the generated joblib artifact outside Git. Confirm s390x wheels/build/runtime before claiming deployment. The current Dockerfile does not package these modules or dependencies.
+- Decision layer: A5's `decide_alert` currently takes metre inputs, a non-null risk value, and a forecast peak. Please confirm whether to retain this helper for the existing trend routes, how a nullable ML score should map to `data_unavailable`, how a valid observed threshold crossing should take precedence, and how `evaluated_at` should be set for historical replay versus live data. I am not proposing a decision response-shape change until A5 and A4 reply.
+- Dashboard compatibility: no existing field or route changes. A4 can continue calling `/v1/predict`; if the dashboard should display the model route, please confirm the desired Eureka-only presentation and fallback behavior before a frontend contract change.
+Action needed: A1 accept/refine whether the shared loader is canonical for replay/model input and confirm its gap/staleness checks. A2 accept/refine the request/response fields and dependency/artifact plan, including the exact LinuxONE test. A4 accept/refine preserving the dashboard contract and whether to adopt this endpoint. A5 accept/refine the decision mapping and stale-data semantics. Record each reply in your own file; I will publish a linked DECISION before implementation.
