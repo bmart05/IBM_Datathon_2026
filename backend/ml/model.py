@@ -19,16 +19,16 @@ import numpy as np
 import pandas as pd
 
 MODEL_NAME = "hist_gradient_boosting"
-MODEL_VERSION = "v1"
+MODEL_VERSION = "v2"
 DEFAULT_FLOOD_STAGE_FT = 19.0
 FEATURE_COLUMNS = (
-    "stage_ft",
-    "change_1h_ft",
-    "change_3h_ft",
-    "change_6h_ft",
-    "mean_3h_ft",
-    "std_3h_ft",
-    "rate_1h_ft_per_hour",
+    "stage_ratio",
+    "change_1h_ratio",
+    "change_3h_ratio",
+    "change_6h_ratio",
+    "mean_3h_ratio",
+    "std_3h_ratio",
+    "rate_1h_ratio_per_hour",
 )
 
 
@@ -48,7 +48,9 @@ def _clean_observations(observations: pd.DataFrame) -> pd.DataFrame:
     return frame.drop_duplicates("timestamp", keep="last").sort_values("timestamp").reset_index(drop=True)
 
 
-def _features_at(history: pd.DataFrame, at: pd.Timestamp) -> dict[str, float] | None:
+def _features_at(
+    history: pd.DataFrame, at: pd.Timestamp, flood_stage_ft: float
+) -> dict[str, float] | None:
     """Create features from readings at/before ``at`` only.
 
     Stage changes use the closest observation at or before the requested lag.
@@ -60,11 +62,15 @@ def _features_at(history: pd.DataFrame, at: pd.Timestamp) -> dict[str, float] | 
     end = int(np.searchsorted(times_ns, at_ns, side="right"))
     if end == 0 or at_ns - times_ns[end - 1] > pd.Timedelta(hours=1).value:
         return None
-    return _features_from_arrays(times_ns, stages, end, at_ns)
+    return _features_from_arrays(times_ns, stages, end, at_ns, flood_stage_ft)
 
 
 def _features_from_arrays(
-    times_ns: np.ndarray, stages: np.ndarray, end: int, at_ns: int
+    times_ns: np.ndarray,
+    stages: np.ndarray,
+    end: int,
+    at_ns: int,
+    flood_stage_ft: float,
 ) -> dict[str, float] | None:
     """Array implementation shared by batch labelling and online inference."""
     current = float(stages[end - 1])
@@ -85,14 +91,16 @@ def _features_from_arrays(
         times_ns[:end], at_ns - pd.Timedelta(hours=3).value, side="right"
     ))
     window = stages[window_start:end]
+    if not np.isfinite(flood_stage_ft) or flood_stage_ft <= 0:
+        raise ValueError("flood_stage_ft must be a positive finite number")
     return {
-        "stage_ft": current,
-        "change_1h_ft": current - one,
-        "change_3h_ft": current - three,
-        "change_6h_ft": current - six,
-        "mean_3h_ft": float(window.mean()) if len(window) else current,
-        "std_3h_ft": float(window.std(ddof=0)) if len(window) else 0.0,
-        "rate_1h_ft_per_hour": current - one,
+        "stage_ratio": current / flood_stage_ft,
+        "change_1h_ratio": (current - one) / flood_stage_ft,
+        "change_3h_ratio": (current - three) / flood_stage_ft,
+        "change_6h_ratio": (current - six) / flood_stage_ft,
+        "mean_3h_ratio": float(window.mean()) / flood_stage_ft if len(window) else current / flood_stage_ft,
+        "std_3h_ratio": float(window.std(ddof=0)) / flood_stage_ft if len(window) else 0.0,
+        "rate_1h_ratio_per_hour": (current - one) / flood_stage_ft,
     }
 
 
@@ -113,7 +121,7 @@ def build_examples(
         raise ValueError("horizon_hours and cadence_minutes must be positive")
     frame = _clean_observations(observations)
     if len(frame) < 3:
-        return pd.DataFrame(columns=["timestamp", *FEATURE_COLUMNS, "label"])
+        return pd.DataFrame(columns=["timestamp", "threshold_ft", *FEATURE_COLUMNS, "label"])
     times = frame.timestamp
     times_ns = times.astype("int64").to_numpy()
     stages = frame.stage_ft.to_numpy(dtype=float)
@@ -133,18 +141,18 @@ def build_examples(
             continue
         if np.diff(times_ns[i:future_end]).max(initial=0) > gap_limit_ns:
             continue
-        features = _features_from_arrays(times_ns, stages, i + 1, at_ns)
+        features = _features_from_arrays(times_ns, stages, i + 1, at_ns, flood_stage_ft)
         if features is None:
             continue
         label = int(bool((stages[i + 1:future_end] >= flood_stage_ft).any()))
-        records.append({"timestamp": at, **features, "label": label})
-    return pd.DataFrame.from_records(records, columns=["timestamp", *FEATURE_COLUMNS, "label"])
+        records.append({"timestamp": at, "threshold_ft": flood_stage_ft, **features, "label": label})
+    return pd.DataFrame.from_records(records, columns=["timestamp", "threshold_ft", *FEATURE_COLUMNS, "label"])
 
 
 @dataclass
 class FittedRiskModel:
     estimator: Any
-    flood_stage_ft: float = DEFAULT_FLOOD_STAGE_FT
+    flood_stage_ft: float | None = DEFAULT_FLOOD_STAGE_FT
     horizon_hours: int = 6
     model_name: str = MODEL_NAME
     model_version: str = MODEL_VERSION
@@ -165,7 +173,13 @@ def train_model(examples: pd.DataFrame, random_state: int = 42) -> FittedRiskMod
         random_state=random_state,
     )
     estimator.fit(usable.loc[:, FEATURE_COLUMNS], usable.label.astype(int))
-    return FittedRiskModel(estimator=estimator)
+    thresholds = (
+        usable["threshold_ft"].dropna().astype(float).unique()
+        if "threshold_ft" in usable
+        else np.array([], dtype=float)
+    )
+    fitted_threshold = float(thresholds[0]) if len(thresholds) == 1 else None
+    return FittedRiskModel(estimator=estimator, flood_stage_ft=fitted_threshold)
 
 
 def _probability(model: FittedRiskModel, features: dict[str, float]) -> float:
@@ -205,14 +219,16 @@ def predict_risk(
         result["fallback"] = "already_above_threshold_ongoing_flood"
         result["model_name"] = "ongoing_flood_state"
         return result
-    features = _features_at(history, cutoff)
+    features = _features_at(history, cutoff, flood_stage_ft)
     if features is None:
         result["fallback"] = "insufficient_recent_history_for_features"
         return result
     if model is None:
         result["fallback"] = "validated_model_not_loaded"
         return result
-    if horizon_hours != model.horizon_hours or flood_stage_ft != model.flood_stage_ft:
+    if horizon_hours != model.horizon_hours or (
+        model.flood_stage_ft is not None and flood_stage_ft != model.flood_stage_ft
+    ):
         result["fallback"] = "model_configuration_mismatch"
         return result
     result["crossing_probability"] = _probability(model, features)
@@ -229,6 +245,7 @@ def evaluate_temporally(
     probability_threshold: float = 0.5,
     flood_stage_ft: float = DEFAULT_FLOOD_STAGE_FT,
     horizon_hours: int = 6,
+    group_column: str | None = None,
 ) -> dict[str, Any]:
     """Train before a fixed UTC cutoff and compare only on later observations."""
     from sklearn.metrics import average_precision_score, brier_score_loss, confusion_matrix, roc_auc_score
@@ -252,9 +269,9 @@ def evaluate_temporally(
     # Persistence predicts a crossing only if already at threshold; these rows
     # are excluded from examples, so its crossing forecast is always negative.
     persistence = np.zeros_like(y)
-    # Trend extrapolation: extrapolate the six-hour change over the next horizon.
-    trend_stage = test.stage_ft.to_numpy() + test.change_6h_ft.to_numpy()
-    trend = (trend_stage >= flood_stage_ft).astype(int)
+    # Extrapolate the observed six-hour relative-stage change over the next six.
+    trend_stage_ratio = test.stage_ratio.to_numpy() + test.change_6h_ratio.to_numpy()
+    trend = (trend_stage_ratio >= 1.0).astype(int)
 
     def scores(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
@@ -270,6 +287,33 @@ def evaluate_temporally(
             "true_negatives": int(tn),
         }
 
+    group_metrics = None
+    if group_column and group_column in test.columns:
+        group_metrics = {}
+        evaluated = test.assign(actual=y, predicted=pred)
+        for group_name, group in evaluated.groupby(group_column, sort=True):
+            actual_positive = int(group.actual.sum())
+            predicted_positive = int(group.predicted.sum())
+            tp = int(((group.actual == 1) & (group.predicted == 1)).sum())
+            group_metrics[str(group_name)] = {
+                "origins": int(len(group)),
+                "positive_windows": actual_positive,
+                "predicted_alert_windows": predicted_positive,
+                "true_positive_windows": tp,
+                "missed_positive_windows": actual_positive - tp,
+                "false_alert_windows": predicted_positive - tp,
+                "event_detected": bool(actual_positive > 0 and tp > 0),
+                "false_alert_replay": bool(actual_positive == 0 and predicted_positive > 0),
+                "dataset_role": str(group.dataset_role.iloc[0]) if "dataset_role" in group else None,
+                "station_id": str(group.station_id.iloc[0]) if "station_id" in group else None,
+                "threshold_ft": float(group.threshold_ft.iloc[0]) if "threshold_ft" in group else None,
+            }
+
+    thresholds = (
+        sorted(float(value) for value in data.threshold_ft.dropna().unique())
+        if "threshold_ft" in data
+        else [flood_stage_ft]
+    )
     return {
         "model": {
             **scores(y, pred),
@@ -282,11 +326,13 @@ def evaluate_temporally(
         "train_rows": int(len(train)),
         "test_rows": int(len(test)),
         "positive_test_rows": int(y.sum()),
-        "train_end_exclusive": cutoff.isoformat(),
+        "train_end_exclusive": (cutoff - purge).isoformat(),
+        "label_purge_hours": horizon_hours,
         "test_start_inclusive": test.timestamp.min().isoformat(),
-        "flood_stage_ft": flood_stage_ft,
+        "flood_stages_ft": thresholds,
         "horizon_hours": horizon_hours,
         "probability_threshold": probability_threshold,
+        "replay_groups": group_metrics,
         "limitations": [
             "Metrics are only meaningful if the test period contains independent flood events.",
             "Adjacent windows overlap; report event-level performance and warning lead time as well.",
