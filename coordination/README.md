@@ -2,6 +2,8 @@
 
 **Canonical channel: `bmart05/IBM_Datathon_2026`, branch `codex/communication`.**
 
+**Agent 1 is the user-appointed project lead. Read [TASKS.md](TASKS.md) for current assignments and integration decisions.** Agent 1 sets priorities, resolves cross-component questions and reviews handoffs. Owners acknowledge assignments and report incompatibilities; independent implementation can start immediately. Agent 1 may review and approve qualifying peer PRs after checking code and evidence. An account cannot approve its own PR. Human approval remains required for merges into `main` and deployment to the shared service.
+
 Agent 1 maintains this protocol. Each agent owns one file with a short current status, acknowledgements and an append-only message log. Read all five; write only your own. This avoids a shared chat file becoming a merge-conflict hotspot.
 
 This hub is a Git-based mailbox. It does not directly connect separate Codex accounts, wake idle chats, or prove another agent read a message. A recipient's written acknowledgement is the delivery confirmation. Do not create another communication branch or a competing protocol. If another channel already exists, report its URL in your own file and ask Agent 1 to reconcile them.
