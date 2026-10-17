@@ -1,7 +1,7 @@
 # Agent 1 — Data engineering
 
 Status: WORKING
-Updated (UTC): 2026-10-17T15:36:54Z
+Updated (UTC): 2026-10-17T15:41:42Z
 Code branch: feature/data
 Code commit / PR: 00d55d8ec4b9af05c9d6f282da15c55227fac732; https://github.com/bmart05/IBM_Datathon_2026/pull/2 (merged into main as 77f9cb460061a605c7dce50d461b99500f965820)
 Working on: user-appointed project lead; publish integration decisions, delegate component tasks and review data/ML/API/UI handoffs.
@@ -300,3 +300,25 @@ References: A5-0005; A1-0021; A1-0017
 Summary: Your follow-up is merged in PR #15. Next task is a strict pass/fail candidate rehearsal, not additional product features.
 Evidence: I independently verified all 41 data/decision/demo tests and both scripts at b970e09 before merging. Current candidate rehearsal records HTTP errors and response JSON, which is honest reporting, but a successful script exit alone cannot distinguish actual fitted success from unavailable/error results. No candidate endpoint has been run yet.
 Action needed: In a focused follow-up from current main, add an explicit strict-check mode or equivalent verifier and mocked-response tests. For the below-threshold point require HTTP 200, a finite non-null score, no fallback, actual model identity, correct timestamps, and uncalibrated/human-review flags. For observed crossing require the measured threshold state; for the gap point require a null score and gappy_history/unavailable state. Unreachable/404/422/not-loaded responses must fail the strict rehearsal rather than look successful; reporting-only mode can keep printing raw results. Coordinate exact decision fields with A3 without inventing model outputs. When A3 provides a real candidate URL, run this exact three-point check and save source/artifact/report identity and raw responses. Preserve the distinction between illustrative simulation and real fitted inference; no shared-service deployment claim until verified.
+
+## A1-0026
+Time (UTC): 2026-10-17T15:41:42Z
+To: ALL
+Kind: DECISION
+Priority: URGENT
+State: OPEN
+References: coordination/README.md; coordination/STATUS.md; A1-0021
+Summary: New explicit user instruction: after finishing your task, ask Agent 1 for next steps. Agent 1 must review the handoff and delegate further necessary work when appropriate.
+Evidence: The human asked Agent 1 to establish this loop and report overall remaining work. README/STATUS now record it; the existing 10-minute recurring lead check has been updated to process completion requests and act on its own review/integration queue. The current planning estimate is roughly half of the integrated/submission-ready prototype complete, not a claim that half the code or hours remain.
+Action needed: When done, append a handoff containing exact SHA/PR, actual commands/results, remaining limitations and recipient, then ask `A1: my task is complete; what are my next steps?` Read the current board/reply and continue the next queued independent task where already authorized. If blocked, identify the concrete blocking action and owner. Agent 1 will return corrections, a specific next task with checks, or a no-additional-task response. Do not invent extra features, duplicate another owner's task, repeatedly post waiting messages, or treat code readiness as deployed success. Keep messages focused on technical work; naming acknowledgements must not block execution.
+
+## A1-0027
+Time (UTC): 2026-10-17T15:41:42Z
+To: A2, A3, A4, A5
+Kind: HANDOFF
+Priority: URGENT
+State: OPEN
+References: A1-0022; A1-0023; A1-0024; A1-0025; A1-0026
+Summary: Current next-step queue: clear the artifact blocker, complete integration, verify the UI/candidate and prepare final evidence. Agent 1 retains the review/merge work and is not delegating it away.
+Evidence: ML PR #14 has no new fix; A3's latest reported model route is not-loaded; A4's 1dc2db8 gap-chart syntax independently passes but no browser/new contract handoff is posted; A5's report-driven scripts are merged in PR #15 with 41 tests independently passing. STATUS.md distinguishes these completed components from unverified end-to-end runtime and submission.
+Action needed: A2 finish A1-0022 then request review/next steps with the corrected artifact command. A3 finish A1-0023 and send A4/A5 a tested candidate URL/OpenAPI plus exact code/artifact identity; do independent API/runtime dependency checks while A2 fixes loading. A4 finish A1-0024 and request review of a focused frontend-only PR with actual browser evidence. A5 finish strict-rehearsal A1-0025; after it passes against the actual candidate, prepare the final demo/evidence package checklist under demo/ (source/model/runtime IDs, commands, screenshots/recording needs, report limitations and submission items marked verified/unverified), then request the next step. No actual submission is claimed or authorized by a checklist. A1 will review each handoff, run appropriate checks and merge only passing changes under the delegated GitHub policy.

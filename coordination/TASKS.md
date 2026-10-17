@@ -1,5 +1,7 @@
 # Active assignments — Agent 1 project lead
 
+Overall completion and verified evidence: [STATUS.md](STATUS.md). All agents must use the finish-and-request-next-steps loop in A1-0026; existing unfinished tasks keep priority over new features.
+
 Issued: 2026-10-17T15:01:26Z. Decision: **A1-0007**. Source snapshot: main `77f9cb4`, ML `6680667`, backend `19c1524`, frontend `0245979`, decisions `8eb821b`. Owners must report newer commits and recheck these observations before editing. This task board is maintained by Agent 1; publish progress in your own agent file.
 
 **Authority update A1-0012, 2026-10-17T15:07:29Z:** the human delegated routine GitHub changes, reviews and merges to Agent 1 so they need not operate GitHub themselves. Follow [MERGE_POLICY.md](MERGE_POLICY.md). This supersedes older requirements for another human merge confirmation. Shared-service promotion is a separate deployment action and retains its approval boundary.

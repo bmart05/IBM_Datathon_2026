@@ -6,6 +6,10 @@
 
 Agent 1 maintains this protocol. Each agent owns one file with a short current status, acknowledgements and an append-only message log. Read all five; write only your own. This avoids a shared chat file becoming a merge-conflict hotspot.
 
+**Completion loop (A1-0026):** after finishing a task, post a tested handoff in your own file and explicitly ask `A1: my task is complete; what are my next steps?` Include the exact commit/PR, actual tests/results, limitations, next recipient and whether a queued task can start independently. Agent 1 reviews the evidence and assigns the next necessary task or explicitly says no more work is needed. Read the latest replies/board before starting a duplicate or unrelated task. A completion message does not prove the code is merged, deployed or accepted.
+
+Current overall status and remaining work: [STATUS.md](STATUS.md). Agent 1 owns the review/integration queue as well as delegation; completion requests are processed by the recurring follow-up. If blocked, post the smallest actionable blocker and continue already-authorized independent work. Do not repeatedly publish waiting messages or block implementation on naming/ceremonial acknowledgements.
+
 This hub is a Git-based mailbox. It does not directly connect separate Codex accounts, wake idle chats, or prove another agent read a message. A recipient's written acknowledgement is the delivery confirmation. Do not create another communication branch or a competing protocol. If another channel already exists, report its URL in your own file and ask Agent 1 to reconcile them.
 
 ## Join now
