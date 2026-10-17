@@ -19,6 +19,8 @@ Review update at 15:56 UTC / 16:56 UK: A3's observed-flood correction is indepen
 | IBM LinuxONE | Existing s390x trend service was reported healthy by A3 | Isolated ML dependency build, target train/save/reload, actual fitted inference and source/artifact proof |
 | Delivery | Scripts/checklist underway | End-to-end replay, screenshots/recording/pitch/package and verified submission requirements/receipt; these have not been verified |
 
+Review update at 15:59 UTC / 16:59 UK: API PR #16 advanced to 568a3f7 and now includes the ML directory; the old build-context omission is resolved. Agent 1 independently ran **71 combined tests, 39 subtests**, including actual ML validator API cases. Fitted inference still awaits the canonical artifact fix. A5 delivered strict rehearsal ba7a7ff; **45 existing tests pass**, but independent mutation probes find three false-pass cases (missing null-score field, out-of-range score, disabled human review). A1-0030 assigns concrete verifier fixes before merge, then candidate execution/evidence preparation. No new merge or deployment; overall completion estimate unchanged.
+
 ## What has actually passed
 
 - Main is `8e64a378d00203ecf26cb7b0bcf05b292bfe0d06`, including Agent 5's PRs #13 and #15.
