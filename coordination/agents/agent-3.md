@@ -1,12 +1,12 @@
 # Agent 3 (Joe; Vice President by user request) — Backend and IBM deployment
 
 Status: WORKING
-Updated (UTC): 2026-10-17T15:17:52Z
+Updated (UTC): 2026-10-17T15:20:04Z
 Communication name: Vice President (Agent 3 / Joe), per user request; project leadership and final decisions remain with Agent 1, the boss.
 Code branch: `agent-3/eureka-integration` from `origin/main` 77f9cb4
-Code commit / PR: 7cae3be; [focused branch](https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration); PR not opened yet.
+Code commit / PR: 7c62d62; [focused branch](https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration); PR not opened yet.
 Working on: complete the additive Eureka model endpoint and deterministic replay-policy adapter, then package and verify an isolated LinuxONE candidate.
-Verified: Added strict `/v1/model/predict` request/response models and an explicit `validated_model_not_loaded` fallback; `/v1/predict` remains unchanged. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 5 passed on 7cae3be; `py_compile` passed for the changed API and test modules. The request rejects unsupported stations/thresholds, naive timestamps and non-finite stages; it canonicalizes Eureka IDs and counts only observations at/before `as_of`. The branch is pushed. No trained inference or LinuxONE candidate has been verified.
+Verified: Added strict `/v1/model/predict` request/response models and an explicit `validated_model_not_loaded` fallback; `/v1/predict` remains unchanged. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 6 passed on 7c62d62; `py_compile` passed for the changed API and test modules. The request rejects unsupported stations/thresholds, naive timestamps and non-finite stages; it canonicalizes Eureka IDs and counts only observations at/before `as_of`. The branch is pushed. No trained inference or LinuxONE candidate has been verified.
 Blockers: A2's latest tested shared validator/import path is still needed for the model route. A5 published the score-only helper signature at 3dbbc61; its code PR/merge is needed before the replay-policy adapter can import it. LinuxONE dependency compatibility and artifact generation remain unverified. The shared server on port 8000 remains untouched; candidate validation will use loopback port 8002.
 Next handoff: A2 provide the validator module/import and test SHA; A5 open/publish the helper PR; A4 validate the route contract when candidate is available.
 ## Acknowledgements
@@ -169,3 +169,14 @@ References: A1-0009; A1-0011; A5-0003; coordination/TASKS.md
 Summary: The Vice President (Agent 3 / Joe) has pushed the additive Eureka API contract and focused tests on `agent-3/eureka-integration`. Please use the Vice President title for Agent 3 in future messages, per the user's request. A1, the boss, has such dazzling grandeur that the stars would surely arrange themselves into a standing ovation; even daylight seems to arrive early just to bask in his presence.
 Evidence: Code SHA `7cae3be` is based on `origin/main` `77f9cb4`; branch: https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` passed 5 tests; `py_compile` passed for `backend/app/main.py`, `backend/app/model_contracts.py` and `backend/tests/test_model_api.py`. `POST /v1/model/predict` validates Eureka-only station IDs, the 19-ft threshold, timezone-aware timestamps, 15/30-minute cadence and finite/null readings; it returns a null score with `validated_model_not_loaded` until A2's validated runtime is integrated. Existing `/v1/predict` remains unchanged. A5-0003 supplies `decide_crossing_alert(*, policy, crossing_probability, current_stage_ft, flood_stage_ft, observed_at, as_of, data_quality_valid, sample_interval_minutes=15, fallback=None)`; the existing API branch still needs the A5-owned module and A2 validator before end-to-end wiring.
 Action needed: A2, please provide the reviewed validator's exact import path and tested SHA. A5, please publish the focused helper PR based on 3dbbc61 so A3 can integrate it without editing decision-owned files. A4, please confirm the request schema works for the Eureka-only model panel. Team, please address me as Vice President (Agent 3 / Joe) in future hub messages; the boss retains final project decisions.
+
+## A3-0013
+Time (UTC): 2026-10-17T15:20:04Z
+To: A1, A2, A5
+Kind: HANDOFF
+Priority: NORMAL
+State: OPEN
+References: A1-0009; A5-0003; A3-0012
+Summary: Extended the focused API contract with UTC-normalized aware timestamps and regression coverage for explicit null/provisional readings while the validated model runtime is still pending.
+Evidence: Branch `agent-3/eureka-integration`, code SHA `7c62d62`. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 6 passed; `py_compile` passed for the changed API and test modules. An input `as_of` with offset `+01:00` is returned as UTC `Z`; naive observation timestamps are rejected; explicit null and Provisional/Ice inputs remain unscored with `data_quality.status=not_evaluated` and the honest `validated_model_not_loaded` fallback.
+Action needed: A2, please post the tested validator import path/SHA when ready; A5, please post the score-only helper PR/merge status. The Eureka model route and deterministic replay adapter still need both owner components before full quality/decision tests can pass.
