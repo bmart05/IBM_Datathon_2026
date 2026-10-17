@@ -1,7 +1,7 @@
 # Agent 1 — Data engineering
 
 Status: WORKING
-Updated (UTC): 2026-10-17T15:41:42Z
+Updated (UTC): 2026-10-17T15:48:20Z
 Code branch: feature/data
 Code commit / PR: 00d55d8ec4b9af05c9d6f282da15c55227fac732; https://github.com/bmart05/IBM_Datathon_2026/pull/2 (merged into main as 77f9cb460061a605c7dce50d461b99500f965820)
 Working on: user-appointed project lead; publish integration decisions, delegate component tasks and review data/ML/API/UI handoffs.
@@ -322,3 +322,14 @@ References: A1-0022; A1-0023; A1-0024; A1-0025; A1-0026
 Summary: Current next-step queue: clear the artifact blocker, complete integration, verify the UI/candidate and prepare final evidence. Agent 1 retains the review/merge work and is not delegating it away.
 Evidence: ML PR #14 has no new fix; A3's latest reported model route is not-loaded; A4's 1dc2db8 gap-chart syntax independently passes but no browser/new contract handoff is posted; A5's report-driven scripts are merged in PR #15 with 41 tests independently passing. STATUS.md distinguishes these completed components from unverified end-to-end runtime and submission.
 Action needed: A2 finish A1-0022 then request review/next steps with the corrected artifact command. A3 finish A1-0023 and send A4/A5 a tested candidate URL/OpenAPI plus exact code/artifact identity; do independent API/runtime dependency checks while A2 fixes loading. A4 finish A1-0024 and request review of a focused frontend-only PR with actual browser evidence. A5 finish strict-rehearsal A1-0025; after it passes against the actual candidate, prepare the final demo/evidence package checklist under demo/ (source/model/runtime IDs, commands, screenshots/recording needs, report limitations and submission items marked verified/unverified), then request the next step. No actual submission is claimed or authorized by a checklist. A1 will review each handoff, run appropriate checks and merge only passing changes under the delegated GitHub policy.
+
+## A1-0028
+Time (UTC): 2026-10-17T15:48:20Z
+To: A3
+Kind: BLOCKER
+Priority: URGENT
+State: OPEN
+References: A1-0023; A1-0007; e0df5a6
+Summary: Independent review of the new replay adapter found observed-threshold precedence is lost when earlier trend history is gappy. Fix before the API handoff is approved.
+Evidence: I reviewed e0df5a6's replay service/contracts/tests and independently ran `PYTHONPATH=backend python -m pytest tests/test_data.py backend/tests -q`: 55 passed, 39 subtests passed (one Starlette/AnyIO deprecation warning). A separate synthetic reproduction uses Approved, unqualified rows at 18:45, 19:00, 19:15 and 19:45 UTC on 2025-01-01; first three stages 0.9 m, latest 1.9 m, published fixture threshold 1.8 m, as_of 19:45. Inferred cadence is 15 min, newest age 0, measured_current_quality is valid, latest timestamp unique; earlier 30-minute gap exceeds 22.5 min. Current response is data_unavailable/gappy_history, even though the measured current stage is valid and already above threshold. These are synthetic regression values, not USGS observations. replay_service validates full trend history and returns _unavailable before checking the valid measured event.
+Action needed: Separate the latest measurement's validity/freshness/duplicate checks from trend-feature completeness, as with the accepted score-only decision helper. A valid fresh observed exceedance should return threshold_exceeded even if no trend forecast can be computed; keep forecast/risk null when history is unusable and retain its quality reason without describing a confident forecast. Invalid, stale, future or conflicting latest readings must still be unavailable. Add tests for fresh observed exceedance with gappy/missing earlier history plus invalid/stale/latest-duplicate counterexamples; preserve the 55 existing cases. Send a new tested SHA and completion/next-step request. This is a review finding on a working branch, not a claim it was merged or deployed. Continue the independent model/runtime assignment; A2's artifact import issue remains a separate blocker.

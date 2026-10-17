@@ -2,6 +2,8 @@
 
 As of 17 October 2026, 15:41 UTC / 16:41 UK. This is a verified-evidence snapshot, not a claim that the running application includes every branch's code.
 
+Review update at 15:48 UTC / 16:48 UK: Agent 3 pushed a deterministic replay endpoint at e0df5a6. Agent 1 independently ran its combined data/decision/demo/API suite: **55 passed, 39 subtests passed**, with one dependency deprecation warning. A separate regression probe found that a fresh, approved measured threshold exceedance is incorrectly reported as data_unavailable when earlier forecast history is gappy. A1-0028 requests correction; this unmerged branch is not approved or deployed. Main remains 8e64a378, and ML PR #14's artifact blocker is unchanged.
+
 **Planning estimate: approximately half of the integrated, submission-ready prototype is complete; roughly half remains.** Much of the component code exists, but the remaining work includes the main integration and runtime risks. This estimate follows delivered capabilities and evidence, not code volume or a reliable prediction of hours remaining.
 
 | Workstream | Current state | Required completion |
