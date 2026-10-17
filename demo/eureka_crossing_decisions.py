@@ -9,6 +9,7 @@ import argparse
 from datetime import datetime, timedelta
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 from urllib.error import HTTPError, URLError
@@ -170,11 +171,92 @@ def call_candidate(base_url: str, observations: list[dict], as_of_text: str) -> 
         return {"http_status": None, "request_observation_count": len(rows), "error": str(exc)}
 
 
+def strict_candidate_check(results: dict) -> dict:
+    """Check the three candidate responses against the agreed demo contract."""
+    failures: dict[str, list[str]] = {}
+    expected_times = {
+        "below_threshold": BELOW_AS_OF,
+        "observed_crossing": OBSERVED_CROSSING_AS_OF,
+        "gappy_history": GAPPY_AS_OF,
+    }
+
+    def fail(scenario: str, message: str) -> None:
+        failures.setdefault(scenario, []).append(message)
+
+    for scenario, expected_as_of in expected_times.items():
+        result = results.get(scenario)
+        if not isinstance(result, dict):
+            fail(scenario, "missing candidate result")
+            continue
+        if result.get("http_status") != 200:
+            fail(scenario, f"expected HTTP 200, received {result.get('http_status')!r}")
+            continue
+        body = result.get("response")
+        if not isinstance(body, dict):
+            fail(scenario, "HTTP 200 response body is missing or not a JSON object")
+            continue
+
+        try:
+            actual_as_of = parse_time(body["as_of"])
+            expected = parse_time(expected_as_of)
+            if actual_as_of != expected:
+                fail(scenario, f"as_of mismatch: expected {expected_as_of}, received {body.get('as_of')!r}")
+        except (KeyError, TypeError, ValueError):
+            fail(scenario, "response is missing a valid timezone-aware as_of timestamp")
+        try:
+            observed_at = parse_time(body["observed_at"])
+            if observed_at != parse_time(expected_as_of):
+                fail(scenario, f"observed_at mismatch: expected {expected_as_of}, received {body.get('observed_at')!r}")
+        except (KeyError, TypeError, ValueError):
+            fail(scenario, "response is missing a valid timezone-aware observed_at timestamp")
+
+        if scenario == "below_threshold":
+            score = body.get("crossing_probability")
+            if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score):
+                fail(scenario, "crossing_probability must be a finite number")
+            if body.get("fallback") is not None:
+                fail(scenario, f"expected no fallback, received {body.get('fallback')!r}")
+            model_name = body.get("model_name")
+            model_version = body.get("model_version")
+            if not isinstance(model_name, str) or not model_name.strip() or model_name == "not_loaded":
+                fail(scenario, "a loaded model_name is required")
+            if not isinstance(model_version, str) or not model_version.strip():
+                fail(scenario, "a non-empty model_version is required")
+            if body.get("probability_is_calibrated") is not False:
+                fail(scenario, "probability_is_calibrated must be false")
+            if body.get("human_review_required") is not True:
+                fail(scenario, "human_review_required must be true")
+        elif scenario == "observed_crossing":
+            stage = body.get("current_stage_ft")
+            if isinstance(stage, bool) or not isinstance(stage, (int, float)) or not math.isfinite(stage):
+                fail(scenario, "current_stage_ft must be a finite measured value")
+            elif stage < THRESHOLD_FT:
+                fail(scenario, f"measured stage {stage} ft is below the {THRESHOLD_FT} ft threshold")
+            if body.get("decision_state") != "threshold_exceeded":
+                fail(scenario, f"expected decision_state threshold_exceeded, received {body.get('decision_state')!r}")
+        else:
+            if body.get("crossing_probability") is not None:
+                fail(scenario, "gappy_history must have a null crossing_probability")
+            if body.get("fallback") != "gappy_history":
+                fail(scenario, f"expected fallback gappy_history, received {body.get('fallback')!r}")
+            if body.get("decision_state") != "data_unavailable":
+                fail(scenario, f"expected decision_state data_unavailable, received {body.get('decision_state')!r}")
+
+    return {
+        "status": "failed" if failures else "passed",
+        "scenarios_checked": len(expected_times),
+        "failures": failures,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evaluation-report", type=Path, help="JSON stdout saved from backend/ml/train_replays.py")
     parser.add_argument("--api-base-url", help="Optional verified candidate base URL, e.g. http://127.0.0.1:8002")
+    parser.add_argument("--strict-candidate-check", action="store_true", help="Fail with a nonzero exit if any candidate scenario misses the expected contract")
     args = parser.parse_args()
+    if args.strict_candidate_check and not args.api_base_url:
+        parser.error("--strict-candidate-check requires --api-base-url")
 
     replay_bytes = REPLAY_PATH.read_bytes()
     replay = json.loads(replay_bytes)
@@ -281,21 +363,26 @@ def main() -> None:
         },
     }
     if args.api_base_url:
+        candidate_results = {
+            "below_threshold": call_candidate(args.api_base_url, observations, BELOW_AS_OF),
+            "observed_crossing": call_candidate(args.api_base_url, observations, OBSERVED_CROSSING_AS_OF),
+            "gappy_history": call_candidate(args.api_base_url, observations, GAPPY_AS_OF),
+        }
         result["candidate_endpoint"] = {
             "base_url": args.api_base_url,
             "route": "POST /v1/model/predict",
-            "results": {
-                "below_threshold": call_candidate(args.api_base_url, observations, BELOW_AS_OF),
-                "observed_crossing": call_candidate(args.api_base_url, observations, OBSERVED_CROSSING_AS_OF),
-                "gappy_history": call_candidate(args.api_base_url, observations, GAPPY_AS_OF),
-            },
+            "results": candidate_results,
         }
+        if args.strict_candidate_check:
+            result["candidate_endpoint"]["strict_check"] = strict_candidate_check(candidate_results)
     else:
         result["candidate_endpoint"] = {
             "status": "not_called",
             "reason": "Pass --api-base-url after Agent 3's isolated candidate is reachable; no deployment is implied.",
         }
     print(json.dumps(result, indent=2))
+    if args.strict_candidate_check and result["candidate_endpoint"]["strict_check"]["status"] != "passed":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -10,7 +10,13 @@ import unittest
 DEMO_DIR = Path(__file__).resolve().parents[2] / "demo"
 sys.path.insert(0, str(DEMO_DIR))
 from compare_policies import compare_replay_data, validate_trend_window  # noqa: E402
-from eureka_crossing_decisions import evaluation_report  # noqa: E402
+from eureka_crossing_decisions import (  # noqa: E402
+    BELOW_AS_OF,
+    GAPPY_AS_OF,
+    OBSERVED_CROSSING_AS_OF,
+    evaluation_report,
+    strict_candidate_check,
+)
 
 
 START = datetime(2026, 10, 17, 12, tzinfo=timezone.utc)
@@ -101,6 +107,101 @@ class TrendPolicyHistoryTests(unittest.TestCase):
             loaded["artifact_identity"]["files"]["model_path"]["sha256"],
             hashlib.sha256(b"test model").hexdigest(),
         )
+
+
+def candidate_result(as_of: str, **body_overrides: object) -> dict:
+    body = {
+        "as_of": as_of,
+        "observed_at": as_of,
+        "current_stage_ft": 18.96,
+        "crossing_probability": 0.72,
+        "model_name": "eureka_classifier",
+        "model_version": "sha256:artifact-version",
+        "fallback": None,
+        "decision_state": "review",
+        "probability_is_calibrated": False,
+        "human_review_required": True,
+    }
+    body.update(body_overrides)
+    return {"http_status": 200, "response": body}
+
+
+def passing_candidate_results() -> dict:
+    return {
+        "below_threshold": candidate_result(BELOW_AS_OF),
+        "observed_crossing": candidate_result(
+            OBSERVED_CROSSING_AS_OF,
+            current_stage_ft=19.04,
+            crossing_probability=None,
+            fallback="already_above_threshold_ongoing_flood",
+            decision_state="threshold_exceeded",
+        ),
+        "gappy_history": candidate_result(
+            GAPPY_AS_OF,
+            current_stage_ft=3.03,
+            crossing_probability=None,
+            model_name="not_loaded",
+            model_version=None,
+            fallback="gappy_history",
+            decision_state="data_unavailable",
+        ),
+    }
+
+
+class StrictCandidateRehearsalTests(unittest.TestCase):
+    def test_all_three_contract_responses_pass(self):
+        report = strict_candidate_check(passing_candidate_results())
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["scenarios_checked"], 3)
+        self.assertEqual(report["failures"], {})
+
+    def test_unreachable_or_unavailable_candidate_fails(self):
+        results = passing_candidate_results()
+        results["below_threshold"] = {"http_status": None, "error": "connection refused"}
+        results["observed_crossing"] = {"http_status": 404, "error": "not found"}
+        results["gappy_history"] = candidate_result(
+            GAPPY_AS_OF,
+            crossing_probability=0.2,
+            fallback="validated_model_not_loaded",
+            decision_state="data_unavailable",
+        )
+        report = strict_candidate_check(results)
+        self.assertEqual(report["status"], "failed")
+        self.assertIn("expected HTTP 200", report["failures"]["below_threshold"][0])
+        self.assertIn("expected HTTP 200", report["failures"]["observed_crossing"][0])
+        self.assertTrue(any("null crossing_probability" in item for item in report["failures"]["gappy_history"]))
+        self.assertTrue(any("gappy_history" in item for item in report["failures"]["gappy_history"]))
+
+    def test_below_threshold_requires_real_identity_score_timestamps_and_safety_flags(self):
+        results = passing_candidate_results()
+        results["below_threshold"] = candidate_result(
+            "2024-11-05T20:00:00Z",
+            crossing_probability=float("nan"),
+            model_name="not_loaded",
+            model_version=None,
+            probability_is_calibrated=True,
+            human_review_required=False,
+        )
+        failures = strict_candidate_check(results)["failures"]["below_threshold"]
+        self.assertTrue(any("finite number" in item for item in failures))
+        self.assertTrue(any("as_of mismatch" in item for item in failures))
+        self.assertTrue(any("loaded model_name" in item for item in failures))
+        self.assertTrue(any("model_version" in item for item in failures))
+        self.assertTrue(any("probability_is_calibrated" in item for item in failures))
+        self.assertTrue(any("human_review_required" in item for item in failures))
+
+    def test_observed_crossing_requires_measured_threshold_state(self):
+        results = passing_candidate_results()
+        results["observed_crossing"] = candidate_result(
+            OBSERVED_CROSSING_AS_OF,
+            current_stage_ft=18.9,
+            crossing_probability=None,
+            fallback="gappy_history",
+            decision_state="data_unavailable",
+        )
+        failures = strict_candidate_check(results)["failures"]["observed_crossing"]
+        self.assertTrue(any("below the 19.0 ft threshold" in item for item in failures))
+        self.assertTrue(any("threshold_exceeded" in item for item in failures))
 
 
 if __name__ == "__main__":

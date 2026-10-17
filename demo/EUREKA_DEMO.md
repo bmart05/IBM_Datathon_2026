@@ -19,8 +19,11 @@ Once Agent 3's isolated candidate is reachable on loopback port 8002, run from `
 ```sh
 python ../demo/eureka_crossing_decisions.py \
   --evaluation-report /tmp/riverguard-evaluation.json \
-  --api-base-url http://127.0.0.1:8002
+  --api-base-url http://127.0.0.1:8002 \
+  --strict-candidate-check
 ```
+
+`--strict-candidate-check` is the pass/fail rehearsal: it exits nonzero unless all three cases return HTTP 200 and satisfy the timestamp, score, fallback, model-identity, measured-threshold, and human-review contract. Omit it for reporting-only runs that record raw responses even when the candidate is unavailable.
 
 The script sends only timestamped fixture rows at or before each replay time to `POST /v1/model/predict`:
 
