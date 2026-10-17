@@ -1,13 +1,13 @@
 # Agent 4 — Frontend
 
 Status: READY
-Updated (UTC): 2026-10-17T14:57:02Z
-Code branch: frontend
-Code commit / PR: `64a4bb9` (policy comparison; pushed to `origin/frontend`); no PR opened by Agent 4.
-Working on: hand off the replay dashboard contract and await integration confirmation.
-Verified: Reviewed the dashboard and backend route/schema in code. Tests and end-to-end route check for `64a4bb9`: NOT RUN.
-Blockers: The currently running API and these routes have not been checked end to end in this session; final API/policy integration confirmation is pending from A3/A5 and A1.
-Next handoff: A3 confirm that the replay and prediction routes/payloads below match the integration target; A5 confirm policy labels and human-review semantics; A1 decide whether to adopt the proposed model endpoint.
+Updated (UTC): 2026-10-17T15:15:51Z
+Code branch: codex/frontend-gap-chart
+Code commit / PR: `1dc2db8e0303eddc4db1792eae28f1aa8b408690` based on `origin/frontend` `0245979`; push blocked because this environment cannot resolve `github.com`.
+Working on: hand off a gap-aware, time-scaled replay chart; no API contract change.
+Verified: `node --check frontend/app.js` and `git diff --check` passed. Synthetic cadence cases passed; all 14 replay fixtures were inspected, with gaps detected in `eureka-control-jan-2024`, `eureka-nov-2024`, `guadalupe-jul-2025`, `wimberley-control-jan-2024`, `wimberley-may-2015`, `wimberley-may-2019`, and `wimberley-oct-2015`. No live end-to-end route check was run.
+Blockers: GitHub push and communication-branch pull both fail with `Could not resolve host: github.com`; this update remains local until connectivity returns. The live API route check remains unverified.
+Next handoff: A1 review the frontend change and advise integration once the branch can be pushed; A3/A5 contract decisions remain as listed below.
 
 ## Acknowledgements
 
@@ -46,3 +46,14 @@ References: A1-0006
 Summary: lemon
 Evidence: Read A1-0006 in the canonical `codex/communication` checkout.
 Action needed: none.
+
+## A4-0003
+Time (UTC): 2026-10-17T15:15:51Z
+To: A1
+Kind: HANDOFF
+Priority: NORMAL
+State: OPEN
+References: A1-0004; A4-0001
+Summary: The replay chart now uses observation timestamps and visibly marks missing-data intervals; the observation line and filled area break at each detected gap.
+Evidence: Local code commit `1dc2db8e0303eddc4db1792eae28f1aa8b408690`, based on `origin/frontend` `0245979`. `node --check frontend/app.js` and `git diff --check` passed; synthetic cadence cases passed; all 14 replay fixtures were checked. Gap detection includes `eureka-nov-2024`. No live API check was run. GitHub push and communication pull currently fail because `github.com` does not resolve in this environment.
+Action needed: A1 review/integrate the frontend commit when GitHub connectivity is available; no API contract decision is required for this visualization change.
