@@ -1,13 +1,13 @@
 # Agent 2 — Machine learning
 
-Status: WORKING
-Updated (UTC): 2026-10-17T15:06:44Z
+Status: READY
+Updated (UTC): 2026-10-17T15:20:01Z
 Code branch: feature/ml
-Code commit / PR: 668066736cc7b328b66f61417cd15b35ff18127b; no PR opened.
-Working on: hand off the six-hour Eureka prototype, expanded replay evaluation and shared-loader compatibility.
-Verified: `backend/ml/.venv/bin/python backend/ml/train_replays.py` completed on the committed working-tree content; all 14 replay files loaded (34,375 observations, 31,130 forecast origins). Eureka 2024+ holdout F1 0.729; cross-gauge F1 0.289 and the July 2025 Guadalupe event was missed.
-Blockers: ML code is not integrated into the backend API/container or `origin/main`; the current `origin/main` diff removes `backend/ml/`, so I did not merge it into `feature/ml`. The shared loader and pandas dependency are not included in the API image.
-Next handoff: Agent 1 (idiot) review the reusable validator and regression tests; A3 consume the validator after its PR-ready import path is reported.
+Code commit / PR: d5646a2422041f53e474bec3374404e9c3de6457; PR not created (GitHub integration returned 403)
+Working on: hand off the tested reusable Eureka validator, validated replay labels, and refreshed evaluation to A1/A3
+Verified: `/Users/Lacksan/Documents/Codex/2026-10-17/i-x20/IBM_Datathon_2026/backend/ml/.venv/bin/python -m unittest discover -s backend/ml/tests -v` passed 7 tests; `python backend/ml/train_replays.py` completed on d5646a2: 14 files, 34,375 observations, 30,913 labelled origins (199 positive), with 1,774 excluded (718 insufficient history, 581 missing, 475 gappy). Eureka holdout F1 0.729; cross-gauge F1 0.302 and Wimberley F1 0.015.
+Blockers: A2-0008 — GitHub integration lacks PR-create access (403); browser session is signed out. Branch is pushed and ready for review.
+Next handoff: Agent 1 (idiot) review d5646a2 and create/review the PR if needed; Vice President (Agent 3 / Joe) import `validate_model_input` from `ml.validation` (internal shared import: `riverguard.data`); A3 package `backend/ml` as `ml` and repository `riverguard/data` plus pandas in the image. Train with `python train_replays.py` from `backend/ml`; load via `from ml.model import load_artifact, predict_risk`; serving dependencies are numpy, pandas, scikit-learn, joblib.
 
 ## Acknowledgements
 
@@ -98,3 +98,14 @@ References: A1-0007; A1-0008; coordination/TASKS.md
 Summary: I accept the ML assignment. I will synchronize `feature/ml` with `origin/main` using a reviewed three-way merge, preserving ML/data files; implement one reusable quality validator with the agreed 15/30-minute cadence, 1.5× gap/freshness gate, cutoff-before-validation, duplicate/missing/source-quality checks and named fallbacks; apply full-lookback checks to labels; add the specified regression tests; rerun evaluation; and prepare a focused PR to `main`.
 Evidence: Read A1-0007, A1-0008 and the active task board. Existing baseline remains `feature/ml` commit `668066736cc7b328b66f61417cd15b35ff18127b`; no tests have yet been run for this assignment.
 Action needed: Agent 1 (idiot) review the validator and resulting evidence at handoff. A3 consume the validator by its final import path; I will report exact imports and commands with the PR.
+
+## A2-0008
+Time (UTC): 2026-10-17T15:20:01Z
+To: A1, A3
+Kind: HANDOFF
+Priority: URGENT
+State: OPEN
+References: A1-0007; A1-0008; A1-0012; A3-0012; A2-0005
+Summary: Completed the validator and replay-training safeguards on `feature/ml`. The shared `validate_model_input()` is at `backend/ml/validation.py`; A3 can import it as `from ml.validation import validate_model_input` after packaging `backend/ml` as `ml`. It accepts 15/30-minute cadence, filters future rows before validation, enforces the 6-hour boundary/one-cadence lag, finite/no-missing values, duplicate conflict checks, 1.5× gap/freshness limits, Approved/A and empty qualifiers, and returns the standard fallback names. Training calls the same validator rules using each replay's measured cadence.
+Evidence: Tested and pushed code commit `d5646a2422041f53e474bec3374404e9c3de6457` to `feature/ml`. `backend/ml/.venv/bin/python -m unittest discover -s backend/ml/tests -v` passed 7 tests. `backend/ml/.venv/bin/python backend/ml/train_replays.py` completed across all 14 replays (34,375 observations; 30,913 labelled origins; 199 positive). Exclusions: insufficient_history 718, missing_observations 581, gappy_history 475. Eureka temporal holdout: 990 train / 6,050 test, F1 0.729 (20 FP/9 FN), AP 0.777, ROC AUC 0.998, Brier 0.0045. Wimberley F1 0.015; cross-gauge F1 0.302 and it underperformed trend, retaining the Eureka-only serving scope. README and metadata refreshed in this commit.
+Action needed: Agent 1 (idiot), please review d5646a2 and open/review the focused PR to `main` if your GitHub access permits. My GitHub connector call to create the PR returned API 403 `Resource not accessible by integration`; the browser session is signed out. No merge or deployment was attempted. Vice President (Agent 3 / Joe), consume the validator using the import above; package `backend/ml` and `riverguard/data` in the API image, with pandas (and the model runtime dependencies numpy/scikit-learn/joblib). Train command from `backend/ml`: `python train_replays.py`; serving load call: `from ml.model import load_artifact, predict_risk`; set verified sample cadence explicitly. A2-0005's question is resolved by A1-0007/A1-0008: accept only 15/30 minutes, stale/gap after 1.5× cadence, and Approved/A with no qualifier.
