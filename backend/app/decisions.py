@@ -118,3 +118,72 @@ def decide_alert(
         DecisionState.normal, policy, policy_threshold,
         f"No alert threshold is met: observed stage is {latest:.2f} m, projected peak is {peak:.2f} m, and estimated exceedance risk is {probability:.0%}.",
     )
+
+
+def decide_crossing_alert(
+    *,
+    policy: AlertPolicy | str,
+    crossing_probability: float | None,
+    current_stage_ft: float | None,
+    flood_stage_ft: float,
+    observed_at: datetime | None,
+    as_of: datetime,
+    data_quality_valid: bool,
+    sample_interval_minutes: int = 15,
+    fallback: str | None = None,
+) -> AlertDecision:
+    """Decide from Eureka's experimental six-hour new-crossing score only.
+
+    The classifier does not predict a peak stage. Its score is kept separate
+    from ``decide_alert``'s trend-baseline exceedance probability. Observation
+    freshness is bounded by 1.5 times the declared source cadence, and ``as_of``
+    is injectable for deterministic historical replay.
+    """
+    policy = AlertPolicy(policy)
+    policy_threshold = POLICY_THRESHOLDS[policy]
+
+    def unavailable(reason: str) -> AlertDecision:
+        return AlertDecision(DecisionState.data_unavailable, policy, None, reason)
+
+    if sample_interval_minutes not in (15, 30):
+        return unavailable("Unsupported sample cadence; only verified 15- or 30-minute Eureka data can support this decision.")
+    if not isfinite(float(flood_stage_ft)) or flood_stage_ft <= 0:
+        return unavailable("The published flood-stage threshold is invalid; verify source metadata before using this result.")
+    if observed_at is None:
+        return unavailable(f"The latest usable observation time is missing; refresh gauge data. Model fallback: {fallback or 'no_observations_at_or_before_as_of'}.")
+    observed = observed_at if observed_at.tzinfo else observed_at.replace(tzinfo=timezone.utc)
+    evaluated = as_of if as_of.tzinfo else as_of.replace(tzinfo=timezone.utc)
+    age = evaluated - observed
+    max_age = timedelta(minutes=sample_interval_minutes * 1.5)
+    if age < timedelta(0) or age > max_age:
+        return unavailable("The latest observation is future-dated or stale for the declared cadence; it cannot support a current threshold claim.")
+    if not data_quality_valid:
+        return unavailable(f"Observation quality is not valid for a decision; model fallback: {fallback or 'quality_not_approved'}.")
+    if current_stage_ft is None or not isfinite(float(current_stage_ft)):
+        return unavailable(f"The current measured stage is unavailable; model fallback: {fallback or 'missing_observations'}.")
+    current = float(current_stage_ft)
+    threshold = float(flood_stage_ft)
+
+    if current >= threshold:
+        return AlertDecision(
+            DecisionState.threshold_exceeded, policy, policy_threshold,
+            f"Observed river stage ({current:.2f} ft) has reached or exceeded the published flood stage ({threshold:.2f} ft). This is an observed ongoing threshold exceedance, not a predicted new crossing; human review is required.",
+        )
+
+    if crossing_probability is None:
+        return unavailable(f"The below-threshold observation has no usable experimental crossing score; model fallback: {fallback or 'validated_model_not_loaded'}.")
+    try:
+        probability = float(crossing_probability)
+    except (TypeError, ValueError):
+        return unavailable("The experimental crossing score is invalid and cannot support a decision.")
+    if not isfinite(probability) or not 0 <= probability <= 1:
+        return unavailable("The experimental crossing score is outside the valid [0, 1] range and cannot support a decision.")
+    if probability >= policy_threshold:
+        return AlertDecision(
+            DecisionState.review, policy, policy_threshold,
+            f"The experimental six-hour new-upward-crossing score ({probability:.0%}; uncalibrated) meets the {policy.value} review cutoff ({policy_threshold:.0%}). Request human review; this score is not a predicted peak, calibrated probability, or autonomous action.",
+        )
+    return AlertDecision(
+        DecisionState.normal, policy, policy_threshold,
+        f"The experimental six-hour new-upward-crossing score ({probability:.0%}; uncalibrated) is below the {policy.value} review cutoff ({policy_threshold:.0%}); the current observed stage ({current:.2f} ft) is below the published flood stage ({threshold:.2f} ft). This is not a calibrated probability or an operational all-clear.",
+    )

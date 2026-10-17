@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import unittest
 
-from app.decisions import AlertPolicy, DecisionState, decide_alert
+from app.decisions import AlertPolicy, DecisionState, POLICY_THRESHOLDS, decide_alert, decide_crossing_alert
 
 
 NOW = datetime(2026, 10, 17, 12, tzinfo=timezone.utc)
@@ -60,6 +60,73 @@ class DecisionScenarios(unittest.TestCase):
 
     def test_same_inputs_and_policy_produce_same_decision(self):
         self.assertEqual(decide(), decide())
+
+
+def decide_crossing(**overrides):
+    values = {
+        "policy": AlertPolicy.balanced,
+        "crossing_probability": 0.6,
+        "current_stage_ft": 18.0,
+        "flood_stage_ft": 19.0,
+        "observed_at": NOW,
+        "as_of": NOW,
+        "data_quality_valid": True,
+        "sample_interval_minutes": 15,
+    }
+    values.update(overrides)
+    return decide_crossing_alert(**values)
+
+
+class CrossingDecisionScenarios(unittest.TestCase):
+    def test_each_policy_cutoff_is_inclusive_and_just_below_is_normal(self):
+        for policy, cutoff in POLICY_THRESHOLDS.items():
+            with self.subTest(policy=policy):
+                self.assertIs(decide_crossing(policy=policy, crossing_probability=cutoff).state, DecisionState.review)
+                below = decide_crossing(policy=policy, crossing_probability=cutoff - 0.001)
+                self.assertIs(below.state, DecisionState.normal)
+                self.assertIn("uncalibrated", below.explanation)
+
+    def test_observed_crossing_precedes_null_score_but_requires_valid_fresh_observation(self):
+        result = decide_crossing(crossing_probability=None, current_stage_ft=19.0, fallback="already_above_threshold_ongoing_flood")
+        self.assertIs(result.state, DecisionState.threshold_exceeded)
+        self.assertIn("Observed", result.explanation)
+        self.assertIs(decide_crossing(crossing_probability=None, current_stage_ft=19.0, data_quality_valid=False).state, DecisionState.data_unavailable)
+
+    def test_null_below_threshold_score_preserves_named_fallback(self):
+        result = decide_crossing(crossing_probability=None, fallback="validated_model_not_loaded")
+        self.assertIs(result.state, DecisionState.data_unavailable)
+        self.assertIn("validated_model_not_loaded", result.explanation)
+
+    def test_missing_timestamp_stale_future_and_invalid_quality_fail_closed(self):
+        cases = [
+            {"observed_at": None},
+            {"observed_at": NOW - timedelta(minutes=23)},
+            {"observed_at": NOW + timedelta(seconds=1)},
+            {"data_quality_valid": False, "fallback": "quality_not_approved"},
+        ]
+        for kwargs in cases:
+            with self.subTest(kwargs=kwargs):
+                self.assertIs(decide_crossing(**kwargs).state, DecisionState.data_unavailable)
+
+    def test_freshness_boundary_is_accepted_for_each_supported_cadence(self):
+        for cadence in (15, 30):
+            with self.subTest(cadence=cadence):
+                exact_limit = NOW - timedelta(minutes=cadence * 1.5)
+                accepted = decide_crossing(observed_at=exact_limit, sample_interval_minutes=cadence)
+                self.assertIs(accepted.state, DecisionState.review)
+                stale = decide_crossing(observed_at=exact_limit - timedelta(microseconds=1), sample_interval_minutes=cadence)
+                self.assertIs(stale.state, DecisionState.data_unavailable)
+
+    def test_historical_as_of_is_deterministic_and_no_peak_is_required(self):
+        result = decide_crossing(crossing_probability=0.9, as_of=NOW)
+        self.assertIs(result.state, DecisionState.review)
+        self.assertEqual(result, decide_crossing(crossing_probability=0.9, as_of=NOW))
+        self.assertIn("not a predicted peak", result.explanation.lower())
+
+    def test_invalid_score_fails_closed(self):
+        for score in (-0.01, 1.01, float("nan")):
+            with self.subTest(score=score):
+                self.assertIs(decide_crossing(crossing_probability=score).state, DecisionState.data_unavailable)
 
 
 if __name__ == "__main__":
