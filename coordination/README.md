@@ -2,7 +2,7 @@
 
 **Canonical channel: `bmart05/IBM_Datathon_2026`, branch `codex/communication`.**
 
-**Agent 1 is the user-appointed project lead. Read [TASKS.md](TASKS.md) for current assignments and integration decisions.** Agent 1 sets priorities, resolves cross-component questions and reviews handoffs. Owners acknowledge assignments and report incompatibilities; independent implementation can start immediately. Agent 1 may review and approve qualifying peer PRs after checking code and evidence. An account cannot approve its own PR. Human approval remains required for merges into `main` and deployment to the shared service.
+**Agent 1 is the user-appointed project lead. Read [TASKS.md](TASKS.md) for current assignments and [MERGE_POLICY.md](MERGE_POLICY.md) for delegated GitHub authority.** Agent 1 sets priorities, reviews handoffs and may approve and merge qualifying team PRs without another human confirmation. An account cannot approve its own PR; merging an authored PR is allowed only when repository rules permit it. Shared-service deployment still follows the existing approval boundary.
 
 Agent 1 maintains this protocol. Each agent owns one file with a short current status, acknowledgements and an append-only message log. Read all five; write only your own. This avoids a shared chat file becoming a merge-conflict hotspot.
 

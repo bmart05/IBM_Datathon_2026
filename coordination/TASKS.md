@@ -2,6 +2,8 @@
 
 Issued: 2026-10-17T15:01:26Z. Decision: **A1-0007**. Source snapshot: main `77f9cb4`, ML `6680667`, backend `19c1524`, frontend `0245979`, decisions `8eb821b`. Owners must report newer commits and recheck these observations before editing. This task board is maintained by Agent 1; publish progress in your own agent file.
 
+**Authority update A1-0012, 2026-10-17T15:07:29Z:** the human delegated routine GitHub changes, reviews and merges to Agent 1 so they need not operate GitHub themselves. Follow [MERGE_POLICY.md](MERGE_POLICY.md). This supersedes older requirements for another human merge confirmation. Shared-service promotion is a separate deployment action and retains its approval boundary.
+
 ## Goal and ownership
 
 Deliver one honest Eureka replay that runs timestamped model inference on LinuxONE, displays observed data and a separate experimental score, and explains the human-review decision. Preserve the existing trend/replay demonstration while preparing that integration. Cross-gauge ML is excluded from serving because its reported evaluation underperformed the trend baseline and missed Guadalupe. Other gauges can retain labelled trend demonstrations.
@@ -41,7 +43,7 @@ Implement the isolated model route and server-backed replay-policy route above. 
 
 Package shared data + ML + decision modules without overwriting the running demo image/container. Check s390x dependency availability early. Build/test a **separate candidate image or container on loopback port 8002**, train from committed fixtures inside that runtime, save/reload artifact outside Git, and exercise one valid below-threshold Eureka inference, gappy/stale fallbacks and unsupported-station rejection. Record actual architecture, source SHA, Python/library versions, artifact metadata, route outputs, test commands and rollback/start commands. Choose a verified replay time before threshold crossing with sufficient history, not an already-flooded demo time. Treat the existing port-8000 service as the shared demo service and keep it running.
 
-Human approval is still required before merging to main or replacing the shared deployment. Prepare a concrete tested candidate first. If the ML runtime is blocked, report the exact package/build failure promptly and keep the honest trend demo available; never present a null-score route as successful fitted inference.
+Agent 1 may merge reviewed and tested PRs to main under the delegated merge policy. Replacing the shared deployment retains its separate human-approval boundary. Prepare a concrete tested candidate first. If the ML runtime is blocked, report the exact package/build failure promptly and keep the honest trend demo available; never present a null-score route as successful fitted inference.
 
 Done: API/build PR + compatibility tests + actual target candidate inference evidence + clear deploy/rollback instructions awaiting human promotion approval.
 
@@ -67,13 +69,13 @@ Prepare a short reproducible demo using the Eureka fixture: a below-threshold re
 
 ## A1 assignment — lead/data owner
 
-Own this board and the data-contract policy; review A2's new validator/lookback tests and A3/A4/A5 PRs against the agreed boundaries. Track acknowledgements and request concrete corrections rather than status chatter. Preserve source-labelled fixtures and existing data tests. No peer's reported test run is represented as an independently verified result until reviewed. Approve qualifying peer PRs only after code/evidence review; GitHub will not permit self-approval. Do not merge to main or promote the shared deployment without human authorization.
+Own this board and the data-contract policy; review A2's new validator/lookback tests and A3/A4/A5 PRs against the agreed boundaries. Track acknowledgements and request concrete corrections rather than status chatter. Preserve source-labelled fixtures and existing data tests. No peer's reported test run is represented as an independently verified result until reviewed. Approve and merge qualifying PRs under MERGE_POLICY.md without asking for another routine merge confirmation. GitHub will not permit self-approval; respect independent-review requirements. Shared-service promotion is not authorized by the GitHub delegation.
 
 ## Handoff and completion order
 
 1. A2 and A5 hand off tested components and PRs; A3/A4 can build adapters/UI against the recorded contract concurrently.
 2. A3 composes a candidate and runs API + real s390x inference checks. A4 validates UI against it. A5 rehearses the same replay and checks its explanations.
-3. Agent 1 reviews the exact PR heads and combined results, requests any corrections, then presents the concrete merge/deploy candidate to the human owner. PR approvals do not authorize deployment.
+3. Agent 1 reviews the exact PR heads and combined results, requests corrections, then merges passing PRs without further human GitHub action. Present the concrete deployment candidate separately; a merge does not authorize shared-service deployment.
 4. After human promotion approval, A3 performs deployment and reports health/source/model identity; A4/A5 rerun the final replay and capture demo evidence.
 
 Every handoff includes message ID, exact commit/PR URL, actual test command/result, remaining limitations and next recipient. If blocked, post the smallest actionable blocker immediately. Otherwise publish at meaningful milestones; no tight polling or repeated "waiting" messages.
