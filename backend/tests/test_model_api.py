@@ -1,10 +1,13 @@
+import json
 from types import SimpleNamespace
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app import model_service
 from app.main import app
+import ml.model
 
 
 client = TestClient(app)
@@ -43,6 +46,27 @@ def request_body(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def eureka_replay_request(as_of):
+    replay_path = Path(__file__).resolve().parents[1] / "data" / "replays" / "eureka-nov-2024.json"
+    replay = json.loads(replay_path.read_text())
+    return {
+        "station_id": "07019000",
+        "as_of": as_of,
+        "flood_stage_ft": 19,
+        "sample_interval_minutes": 15,
+        "observations": [
+            {
+                "timestamp": row["time"],
+                "stage_ft": row["stage_ft"],
+                "approval_status": row.get("approval_status"),
+                "qualifier": row.get("qualifier"),
+            }
+            for row in replay["observations"]
+            if row["time"] <= as_of
+        ],
+    }
 
 
 def test_model_contract_canonicalizes_eureka_and_returns_honest_fallback():
@@ -226,6 +250,44 @@ def test_fresh_approved_observed_flood_is_not_hidden_by_missing_model():
     assert body["current_stage_ft"] == 19.2
     assert body["decision_state"] == "threshold_exceeded"
     assert "observed ongoing threshold exceedance" in body["rationale"].lower()
+
+
+@pytest.mark.parametrize(
+    ("as_of", "expected_fallback", "expected_decision", "expected_quality"),
+    [
+        ("2024-11-05T19:45:00Z", "validated_model_not_loaded", "data_unavailable", "valid"),
+        (
+            "2024-11-05T20:00:00Z",
+            "already_above_threshold_ongoing_flood",
+            "threshold_exceeded",
+            "valid",
+        ),
+        ("2024-11-03T10:30:00Z", "gappy_history", "data_unavailable", "unavailable"),
+    ],
+)
+def test_replay_api_uses_real_ml_validator_and_fails_closed_without_artifact(
+    monkeypatch, as_of, expected_fallback, expected_decision, expected_quality
+):
+    monkeypatch.setattr(model_service, "_ml_runtime", lambda: (ml.model, None))
+    monkeypatch.setattr(
+        model_service,
+        "_load_artifact",
+        lambda module, directory: (_ for _ in ()).throw(FileNotFoundError()),
+    )
+
+    response = client.post("/v1/model/predict", json=eureka_replay_request(as_of))
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["fallback"] == expected_fallback
+    assert body["decision_state"] == expected_decision
+    assert body["data_quality"]["status"] == expected_quality
+    assert body["crossing_probability"] is None
+    assert body["data_quality"]["runtime_error_type"] == "FileNotFoundError"
+    assert body["human_review_required"] is True
+    if as_of == "2024-11-05T20:00:00Z":
+        assert body["current_stage_ft"] == 19.04
+        assert "observed ongoing threshold exceedance" in body["rationale"].lower()
 
 
 def test_legacy_prediction_contract_remains_available():
