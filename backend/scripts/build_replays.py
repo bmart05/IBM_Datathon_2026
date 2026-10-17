@@ -56,6 +56,64 @@ EVENTS = {
         "usgs_id": "USGS-07019000",
         "minor_stage_ft": 19.0,
     },
+    "eureka-nov-2024": {
+        "name": "Meramec River flood near Eureka — November 2024",
+        "start": "2024-11-03",
+        "end": "2024-11-18",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
+    },
+    "eureka-apr-2025": {
+        "name": "Meramec River flood near Eureka — April 2025",
+        "start": "2025-04-03",
+        "end": "2025-04-13",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
+    },
+    "eureka-control-jan-2024": {
+        "name": "Meramec River near Eureka — January 2024 control",
+        "start": "2024-01-01",
+        "end": "2024-02-01",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
+        "role": "control",
+    },
+    "eureka-control-feb-2024": {
+        "name": "Meramec River near Eureka — February 2024 control",
+        "start": "2024-02-01",
+        "end": "2024-03-01",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
+        "role": "control",
+    },
+    "wimberley-control-jan-2024": {
+        "name": "Blanco River at Wimberley — January 2024 control",
+        "start": "2024-01-01",
+        "end": "2024-02-01",
+        "station_name": "Blanco River at Wimberley, Texas",
+        "noaa_id": "WMBT2",
+        "usgs_id": "USGS-08171000",
+        "minor_stage_ft": 13.0,
+        "role": "control",
+    },
+    "wimberley-control-feb-2024": {
+        "name": "Blanco River at Wimberley — February 2024 control",
+        "start": "2024-02-01",
+        "end": "2024-03-01",
+        "station_name": "Blanco River at Wimberley, Texas",
+        "noaa_id": "WMBT2",
+        "usgs_id": "USGS-08171000",
+        "minor_stage_ft": 13.0,
+        "role": "control",
+    },
 }
 
 
@@ -91,9 +149,16 @@ def fetch_replay(replay_id: str) -> dict:
     if not observations:
         raise RuntimeError(f"No observations returned for {replay_id}")
     peak = max(observations, key=lambda item: item["stage_ft"])
+    role = event.get("role", "flood_event")
+    if role == "control" and peak["stage_ft"] >= minor_stage_ft:
+        raise RuntimeError(
+            f"Control window {replay_id} reached {peak['stage_ft']} ft, "
+            f"at or above its {minor_stage_ft} ft minor-stage threshold"
+        )
     return {
         "replay_id": replay_id,
         "name": event["name"],
+        "dataset_role": role,
         "station": {
             "name": event["station_name"],
             "noaa_id": event["noaa_id"],

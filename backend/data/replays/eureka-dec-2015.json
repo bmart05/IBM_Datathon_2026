@@ -1,5 +1,6 @@
 {
   "replay_id": "eureka-dec-2015",
+  "dataset_role": "flood_event",
   "name": "Meramec River flood near Eureka \u2014 December 2015",
   "station": {
     "name": "Meramec River near Eureka, Missouri",
