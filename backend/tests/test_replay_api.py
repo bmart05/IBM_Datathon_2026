@@ -169,3 +169,52 @@ def test_fresh_observed_threshold_is_distinguished_from_forecast_review():
     assert result.decision_state == "threshold_exceeded"
     assert "observed threshold crossing" in result.rationale.lower()
     assert result.current_stage_m == 1.8
+
+
+def test_fresh_observed_exceedance_survives_gappy_or_missing_trend_history():
+    request = ReplayPredictionRequest(as_of="2025-01-01T19:45:00Z")
+    gappy = predict_replay(
+        synthetic_fixture([0, 15, 30, 60], latest_stage=1.9), request
+    )
+    missing_history = synthetic_fixture([0, 15, 30, 45, 60], latest_stage=1.9)
+    missing_history["observations"][1]["stage_m"] = None
+    missing = predict_replay(missing_history, request)
+
+    for result in (gappy, missing):
+        assert result.decision_state == "threshold_exceeded"
+        assert result.current_stage_m == 1.9
+        assert result.predicted_peak_m is None
+        assert result.probability_exceedance is None
+        assert result.policy_threshold == 0.55
+        assert result.fallback in {"gappy_history", "missing_observations"}
+        assert "observed threshold crossing" in result.rationale.lower()
+
+
+def test_unusable_latest_measurement_never_overrides_history_fallback():
+    request = ReplayPredictionRequest(as_of="2025-01-01T19:45:00Z")
+    provisional = synthetic_fixture([0, 15, 30, 60], latest_stage=1.9)
+    provisional["observations"][-1]["approval_status"] = "Provisional"
+    stale = predict_replay(
+        synthetic_fixture([0, 15, 30, 60], latest_stage=1.9),
+        ReplayPredictionRequest(as_of="2025-01-01T20:08:00Z"),
+    )
+    future = predict_replay(
+        synthetic_fixture([0, 15, 30, 60], latest_stage=1.9),
+        ReplayPredictionRequest(as_of="2025-01-01T18:30:00Z"),
+    )
+    conflicting_latest = synthetic_fixture([0, 15, 30, 60], latest_stage=1.9)
+    conflicting_latest["observations"].append({
+        **conflicting_latest["observations"][-1],
+        "approval_status": "Provisional",
+    })
+    conflicted = predict_replay(conflicting_latest, request)
+    unapproved = predict_replay(provisional, request)
+
+    assert unapproved.decision_state == "data_unavailable"
+    assert unapproved.fallback == "quality_not_approved"
+    assert stale.decision_state == "data_unavailable"
+    assert stale.fallback == "stale_history"
+    assert future.decision_state == "data_unavailable"
+    assert future.fallback == "no_observations_at_or_before_as_of"
+    assert conflicted.decision_state == "data_unavailable"
+    assert conflicted.fallback == "conflicting_duplicates"
