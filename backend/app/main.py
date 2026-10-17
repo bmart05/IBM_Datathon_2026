@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 import json
 from math import isfinite
 import os
@@ -15,6 +14,7 @@ import urllib.request
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
+from .decisions import AlertPolicy, decide_alert
 
 app = FastAPI(
     title="RiverGuard API",
@@ -35,12 +35,6 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
-
-
-class AlertPolicy(str, Enum):
-    cautious = "cautious"
-    balanced = "balanced"
-    early = "early"
 
 
 class PredictionRequest(BaseModel):
@@ -68,17 +62,13 @@ class PredictionResponse(BaseModel):
     flood_stage_m: float
     probability_exceedance: float
     alert: str
+    decision_state: str
+    policy_threshold: float | None = None
     rationale: str
     model: str = "trend_baseline"
     probability_is_calibrated: bool = False
     human_review_required: bool = True
 
-
-POLICY_THRESHOLDS = {
-    AlertPolicy.cautious: 0.75,
-    AlertPolicy.balanced: 0.55,
-    AlertPolicy.early: 0.35,
-}
 
 NOAA_ROOT = "https://api.water.noaa.gov/nwps/v1"
 NOAA_BASE = f"{NOAA_ROOT}/gauges"
@@ -587,12 +577,13 @@ def predict(request: PredictionRequest):
     margin = peak - request.flood_stage_m
     # A transparent heuristic score, intentionally not represented as calibrated ML probability.
     probability = round(min(0.99, max(0.01, 0.5 + margin * 0.5)), 3)
-    threshold = POLICY_THRESHOLDS[request.policy]
-    alert = "review_now" if probability >= threshold else "monitor"
-    rationale = (
-        f"Trend baseline projects {peak:.2f} m in six hours versus "
-        f"{request.flood_stage_m:.2f} m flood stage. This is a prototype estimate; "
-        "confirm against official forecasts and gauge metadata."
+    decision = decide_alert(
+        policy=request.policy,
+        probability_exceedance=probability,
+        latest_stage_m=latest,
+        forecast_peak_m=peak,
+        flood_stage_m=request.flood_stage_m,
+        observed_at=request.observed_at,
     )
     timestamp = request.observed_at
     if timestamp.tzinfo is None:
@@ -603,6 +594,11 @@ def predict(request: PredictionRequest):
         predicted_peak_m=round(peak, 3),
         flood_stage_m=request.flood_stage_m,
         probability_exceedance=probability,
-        alert=alert,
-        rationale=rationale,
+        alert=decision.state.value,
+        decision_state=decision.state.value,
+        policy_threshold=decision.policy_threshold,
+        rationale=(
+            f"{decision.explanation} Forecast source: trend baseline, six-hour horizon; "
+            "risk score is uncalibrated and all alerts require human review."
+        ),
     )

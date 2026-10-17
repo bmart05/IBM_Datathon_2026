@@ -2,6 +2,8 @@
 
 Small FastAPI service intended for IBM LinuxONE. It includes `/health`, a `/v1/predict` trend-baseline endpoint, and NOAA integration for U.S. gauges. Wimberley (NOAA `WMBT2`, USGS `08171000`) remains the default demo station. It accepts the sensor sample interval. The returned risk number is explicitly marked uncalibrated; the baseline is for wiring the dashboard and proving deployment, and is **not a trained or calibrated flood model** and must not be used for operational decisions.
 
+Alert decisions are produced by `app/decisions.py`. `cautious`, `balanced`, and `early` policies change only the risk threshold; they do not change published flood stages. Decisions distinguish observed threshold crossings from forecast risk, include an explanation, and fail closed for missing or stale evidence. Every decision requires human review. Run the bundled policy sensitivity report from this directory with `python ../demo/compare_policies.py`; its trend score is an uncalibrated demonstration baseline, not validated model performance.
+
 ## Run locally
 
 ```sh
