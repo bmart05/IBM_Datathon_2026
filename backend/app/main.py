@@ -20,8 +20,8 @@ from pydantic import BaseModel, Field, field_validator
 from .model_contracts import (
     EurekaModelRequest,
     EurekaModelResponse,
-    model_unavailable_response,
 )
+from .model_service import predict_eureka_model as evaluate_eureka_model
 from .replay_contracts import ReplayPredictionRequest, ReplayPredictionResponse
 from .replay_service import predict_replay
 
@@ -266,13 +266,8 @@ def health():
 
 @app.post("/v1/model/predict", response_model=EurekaModelResponse)
 def predict_eureka_model(request: EurekaModelRequest):
-    """Experimental Eureka inference contract.
-
-    Keep the trained classifier opt-in and isolated from the legacy trend
-    endpoints. Until the validated runtime is installed, return an explicit
-    unavailable result instead of presenting a heuristic as model output.
-    """
-    return model_unavailable_response(request)
+    """Experimental Eureka inference contract, isolated from legacy trends."""
+    return evaluate_eureka_model(request)
 
 
 def load_replay(replay_id: str) -> dict:

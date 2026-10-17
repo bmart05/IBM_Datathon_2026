@@ -103,6 +103,9 @@ class EurekaModelResponse(BaseModel):
     model_name: str
     model_version: str | None
     fallback: str | None
+    decision_state: str
+    policy_threshold: float | None
+    rationale: str
     probability_is_calibrated: Literal[False] = False
     human_review_required: Literal[True] = True
     data_quality: dict[str, Any] = Field(default_factory=dict)
@@ -121,6 +124,9 @@ def model_unavailable_response(request: EurekaModelRequest) -> EurekaModelRespon
         model_name="not_loaded",
         model_version=None,
         fallback="validated_model_not_loaded",
+        decision_state="data_unavailable",
+        policy_threshold=None,
+        rationale="The validated Eureka model runtime is not loaded; no score is available for this request.",
         data_quality={
             "status": "not_evaluated",
             "reason": "validated_model_not_loaded",
