@@ -1,13 +1,13 @@
 # Agent 2 — Machine learning
 
-Status: READY
-Updated (UTC): 2026-10-17T15:20:01Z
+Status: WORKING
+Updated (UTC): 2026-10-17T15:54:22Z
 Code branch: feature/ml
-Code commit / PR: d5646a2422041f53e474bec3374404e9c3de6457; PR not created (GitHub integration returned 403)
-Working on: hand off the tested reusable Eureka validator, validated replay labels, and refreshed evaluation to A1/A3
-Verified: `/Users/Lacksan/Documents/Codex/2026-10-17/i-x20/IBM_Datathon_2026/backend/ml/.venv/bin/python -m unittest discover -s backend/ml/tests -v` passed 7 tests; `python backend/ml/train_replays.py` completed on d5646a2: 14 files, 34,375 observations, 30,913 labelled origins (199 positive), with 1,774 excluded (718 insufficient history, 581 missing, 475 gappy). Eureka holdout F1 0.729; cross-gauge F1 0.302 and Wimberley F1 0.015.
-Blockers: A2-0008 — GitHub integration lacks PR-create access (403); browser session is signed out. Branch is pushed and ready for review.
-Next handoff: Agent 1 (idiot) review d5646a2 and create/review the PR if needed; Vice President (Agent 3 / Joe) import `validate_model_input` from `ml.validation` (internal shared import: `riverguard.data`); A3 package `backend/ml` as `ml` and repository `riverguard/data` plus pandas in the image. Train with `python train_replays.py` from `backend/ml`; load via `from ml.model import load_artifact, predict_risk`; serving dependencies are numpy, pandas, scikit-learn, joblib.
+Code commit / PR: d5646a2422041f53e474bec3374404e9c3de6457; PR #14 is draft pending artifact identity fix
+Working on: make ML training and serving use the canonical `ml.*` module identity and add a fresh-process artifact regression
+Verified: Previous validator commit passed 7 tests and replay evaluation; A1-0018 reproduced a fresh-process joblib import failure that I am now fixing.
+Blockers: none for implementation
+Next handoff: Agent 1 (idiot) review the fix and update PR #14; A3 use `ml.model`/`ml.validation` under the service package root.
 
 ## Acknowledgements
 
@@ -109,3 +109,14 @@ References: A1-0007; A1-0008; A1-0012; A3-0012; A2-0005
 Summary: Completed the validator and replay-training safeguards on `feature/ml`. The shared `validate_model_input()` is at `backend/ml/validation.py`; A3 can import it as `from ml.validation import validate_model_input` after packaging `backend/ml` as `ml`. It accepts 15/30-minute cadence, filters future rows before validation, enforces the 6-hour boundary/one-cadence lag, finite/no-missing values, duplicate conflict checks, 1.5× gap/freshness limits, Approved/A and empty qualifiers, and returns the standard fallback names. Training calls the same validator rules using each replay's measured cadence.
 Evidence: Tested and pushed code commit `d5646a2422041f53e474bec3374404e9c3de6457` to `feature/ml`. `backend/ml/.venv/bin/python -m unittest discover -s backend/ml/tests -v` passed 7 tests. `backend/ml/.venv/bin/python backend/ml/train_replays.py` completed across all 14 replays (34,375 observations; 30,913 labelled origins; 199 positive). Exclusions: insufficient_history 718, missing_observations 581, gappy_history 475. Eureka temporal holdout: 990 train / 6,050 test, F1 0.729 (20 FP/9 FN), AP 0.777, ROC AUC 0.998, Brier 0.0045. Wimberley F1 0.015; cross-gauge F1 0.302 and it underperformed trend, retaining the Eureka-only serving scope. README and metadata refreshed in this commit.
 Action needed: Agent 1 (idiot), please review d5646a2 and open/review the focused PR to `main` if your GitHub access permits. My GitHub connector call to create the PR returned API 403 `Resource not accessible by integration`; the browser session is signed out. No merge or deployment was attempted. Vice President (Agent 3 / Joe), consume the validator using the import above; package `backend/ml` and `riverguard/data` in the API image, with pandas (and the model runtime dependencies numpy/scikit-learn/joblib). Train command from `backend/ml`: `python train_replays.py`; serving load call: `from ml.model import load_artifact, predict_risk`; set verified sample cadence explicitly. A2-0005's question is resolved by A1-0007/A1-0008: accept only 15/30 minutes, stale/gap after 1.5× cadence, and Approved/A with no qualifier.
+
+## A2-0009
+Time (UTC): 2026-10-17T15:54:22Z
+To: A1
+Kind: ACK
+Priority: URGENT
+State: ACKED
+References: A1-0018; A1-0022
+Summary: Acknowledged the reproduced artifact module-identity blocker and will fix it before further ML changes. I will make training and serving import the same `ml.model` package, document its module command, add a fresh-process save/load/predict regression, regenerate the artifact under that identity and update PR #14.
+Evidence: A1-0018 reproduces saving with `from model ...` from `backend/ml`, then failing to load with `from ml.model ...` from `backend`. Current development branch is `feature/ml` at d5646a2; seven prior validator tests pass, but that does not verify cross-process artifact compatibility.
+Action needed: none; implementing the requested correction on `feature/ml`.
