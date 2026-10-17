@@ -314,6 +314,67 @@ def confusion_metrics(rows: list[dict], method: str, threshold_time: datetime | 
     }
 
 
+def event_level_metrics(
+    origins: list[dict],
+    observations: list[dict],
+    method: str,
+    threshold: float,
+    horizon: timedelta,
+) -> tuple[dict, list[dict]]:
+    crossing_times = []
+    last_below = observations[0]["dt"] if observations[0]["stage_m"] < threshold else None
+    currently_above = observations[0]["stage_m"] >= threshold
+    if currently_above:
+        crossing_times.append(observations[0]["dt"])
+
+    for row in observations[1:]:
+        if row["stage_m"] < threshold:
+            if currently_above:
+                currently_above = False
+                last_below = row["dt"]
+            elif last_below is None:
+                last_below = row["dt"]
+            continue
+        if not currently_above:
+            if last_below is None or row["dt"] - last_below >= horizon:
+                crossing_times.append(row["dt"])
+            currently_above = True
+
+    event_results = []
+    event_leads = []
+    for crossing_time in crossing_times:
+        candidate_alerts = [
+            row["time"]
+            for row in origins
+            if row[method] and row["time"] < crossing_time and crossing_time - row["time"] <= horizon
+        ]
+        lead = round((crossing_time - min(candidate_alerts)).total_seconds() / 60) if candidate_alerts else None
+        if lead is not None:
+            event_leads.append(lead)
+        event_results.append({"observed_threshold_crossing": crossing_time.isoformat(), "detected": bool(candidate_alerts), "warning_lead_minutes": lead})
+
+    false_alert_times = [row["time"] for row in origins if row[method] and not row["actual"]]
+    false_alert_episodes = 0
+    previous_alert = None
+    for alert_time in false_alert_times:
+        if previous_alert is None or alert_time - previous_alert > horizon:
+            false_alert_episodes += 1
+        previous_alert = alert_time
+
+    detected = sum(item["detected"] for item in event_results)
+    event_precision = detected / (detected + false_alert_episodes) if detected + false_alert_episodes else None
+    metrics = {
+        "threshold_crossing_events": len(event_results),
+        "detected_events": detected,
+        "missed_events": len(event_results) - detected,
+        "event_detection_rate": round(detected / len(event_results), 3) if event_results else None,
+        "median_warning_lead_minutes": round(median(event_leads)) if event_leads else None,
+        "false_alarm_episodes": false_alert_episodes,
+        "event_precision": round(event_precision, 3) if event_precision is not None else None,
+    }
+    return metrics, event_results
+
+
 def evaluate_replay(fixture: dict) -> dict:
     parsed = [
         {**row, "dt": datetime.fromisoformat(row["time"].replace("Z", "+00:00"))}
@@ -365,6 +426,12 @@ def evaluate_replay(fixture: dict) -> dict:
 
     crossings = [row["dt"] for row in parsed if row["stage_m"] >= threshold]
     first_crossing = min(crossings) if crossings else None
+    event_metrics = {}
+    event_details = {}
+    for method in ("persistence", "trend"):
+        event_metrics[method], event_details[method] = event_level_metrics(
+            origins, parsed, method, threshold, horizon
+        )
     return {
         "replay_id": fixture["replay_id"],
         "station_id": fixture["station"]["noaa_id"],
@@ -377,6 +444,16 @@ def evaluate_replay(fixture: dict) -> dict:
             "methods": {
                 "persistence": confusion_metrics(origins, "persistence", first_crossing),
                 "linear_trend_1h": confusion_metrics(origins, "trend", first_crossing),
+            },
+            "event_level": {
+                "definition": (
+                    "One flood event begins at the first observed rise above minor stage after at least one full forecast horizon below stage. "
+                    "An alert detects it when it occurs within the preceding forecast horizon. Consecutive false-alert origins are merged when their gap is no greater than the horizon."
+                ),
+                "methods": {
+                    "persistence": {**event_metrics["persistence"], "events": event_details["persistence"]},
+                    "linear_trend_1h": {**event_metrics["trend"], "events": event_details["trend"]},
+                },
             },
             "limitations": [
                 "Forecast windows overlap and are not independent samples.",
@@ -392,6 +469,60 @@ def evaluate_replay(fixture: dict) -> dict:
 def replay_evaluation(replay_id: str):
     """Compare persistence and one-hour trend baselines over six-hour horizons."""
     return evaluate_replay(load_replay(replay_id))
+
+
+@app.get("/v1/replays/evaluation/summary")
+def replay_evaluation_summary():
+    """Aggregate baseline results by observed flood episode across bundled replays."""
+    replay_results = [
+        evaluate_replay(load_replay(path.stem))
+        for path in sorted(REPLAY_DIR.glob("*.json"))
+    ]
+    method_names = {"persistence": "persistence", "linear_trend_1h": "trend"}
+    summaries = {}
+    for output_name, method in method_names.items():
+        method_results = [
+            replay["evaluation"]["event_level"]["methods"][output_name]
+            for replay in replay_results
+        ]
+        total_events = sum(item["threshold_crossing_events"] for item in method_results)
+        detected_events = sum(item["detected_events"] for item in method_results)
+        false_alarms = sum(item["false_alarm_episodes"] for item in method_results)
+        warning_leads = [
+            event["warning_lead_minutes"]
+            for item in method_results
+            for event in item["events"]
+            if event["warning_lead_minutes"] is not None
+        ]
+        summaries[output_name] = {
+            "threshold_crossing_events": total_events,
+            "detected_events": detected_events,
+            "missed_events": total_events - detected_events,
+            "event_detection_rate": round(detected_events / total_events, 3) if total_events else None,
+            "median_warning_lead_minutes": round(median(warning_leads)) if warning_leads else None,
+            "false_alarm_episodes": false_alarms,
+            "event_precision": round(detected_events / (detected_events + false_alarms), 3)
+            if detected_events + false_alarms else None,
+        }
+    return {
+        "replay_count": len(replay_results),
+        "event_level": {
+            "methods": summaries,
+            "replays": [
+                {
+                    "replay_id": replay["replay_id"],
+                    "station_id": replay["station_id"],
+                    "event_level": replay["evaluation"]["event_level"]["methods"],
+                }
+                for replay in replay_results
+            ],
+            "limitations": [
+                "Forecast origins are collapsed into observed threshold-crossing events; false-alert origins within one forecast horizon are merged.",
+                "Results describe the bundled episodes only and are not a held-out validation or evidence of generalization.",
+                "Flood events at the same station are distinct episodes, not independent station or watershed samples.",
+            ],
+        },
+    }
 
 
 @app.get("/v1/stations/wimberley")

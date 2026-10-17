@@ -1,4 +1,4 @@
-"""Download fixed Wimberley flood windows from the USGS Water Data API."""
+"""Download fixed historic flood windows from the USGS Water Data API."""
 from __future__ import annotations
 
 import argparse
@@ -9,32 +9,62 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 API = "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items"
-SITE = "USGS-08171000"
-MINOR_STAGE_FT = 13.0
 FT_TO_M = 0.3048
 EVENTS = {
     "wimberley-may-2015": {
         "name": "Blanco River flood at Wimberley — May 2015",
         "start": "2015-05-23",
         "end": "2015-05-26",
+        "station_name": "Blanco River at Wimberley, Texas",
+        "noaa_id": "WMBT2",
+        "usgs_id": "USGS-08171000",
+        "minor_stage_ft": 13.0,
     },
     "wimberley-oct-2015": {
         "name": "Blanco River flood at Wimberley — October 2015",
         "start": "2015-10-29",
         "end": "2015-11-02",
+        "station_name": "Blanco River at Wimberley, Texas",
+        "noaa_id": "WMBT2",
+        "usgs_id": "USGS-08171000",
+        "minor_stage_ft": 13.0,
     },
     "wimberley-may-2019": {
         "name": "Blanco River flood at Wimberley — May 2019",
         "start": "2019-05-07",
         "end": "2019-05-11",
+        "station_name": "Blanco River at Wimberley, Texas",
+        "noaa_id": "WMBT2",
+        "usgs_id": "USGS-08171000",
+        "minor_stage_ft": 13.0,
+    },
+    "eureka-dec-2015": {
+        "name": "Meramec River flood near Eureka — December 2015",
+        "start": "2015-12-23",
+        "end": "2016-01-10",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
+    },
+    "eureka-may-2017": {
+        "name": "Meramec River flood near Eureka — May 2017",
+        "start": "2017-04-23",
+        "end": "2017-05-12",
+        "station_name": "Meramec River near Eureka, Missouri",
+        "noaa_id": "ERKM7",
+        "usgs_id": "USGS-07019000",
+        "minor_stage_ft": 19.0,
     },
 }
 
 
 def fetch_replay(replay_id: str) -> dict:
     event = EVENTS[replay_id]
+    site = event["usgs_id"]
+    minor_stage_ft = event["minor_stage_ft"]
     params = {
-        "monitoring_location_id": SITE,
+        "monitoring_location_id": site,
         "parameter_code": "00065",
         "datetime": f"{event['start']}/{event['end']}",
         "f": "json",
@@ -65,16 +95,16 @@ def fetch_replay(replay_id: str) -> dict:
         "replay_id": replay_id,
         "name": event["name"],
         "station": {
-            "name": "Blanco River at Wimberley, Texas",
-            "noaa_id": "WMBT2",
-            "usgs_id": SITE,
+            "name": event["station_name"],
+            "noaa_id": event["noaa_id"],
+            "usgs_id": site,
         },
         "target": {
             "description": "Will stage reach minor flood stage within the next six hours?",
             "horizon_hours": 6,
             "flood_category": "minor",
-            "threshold_ft": MINOR_STAGE_FT,
-            "threshold_m": round(MINOR_STAGE_FT * FT_TO_M, 3),
+            "threshold_ft": minor_stage_ft,
+            "threshold_m": round(minor_stage_ft * FT_TO_M, 3),
         },
         "period": {"start": event["start"], "end": event["end"]},
         "source": {
