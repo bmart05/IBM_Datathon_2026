@@ -5,7 +5,7 @@ Application repository for the IBM Datathon project. Components live in separate
 ## Components
 
 - [`backend/`](backend/README.md): FastAPI service, NOAA U.S. gauge integration, and LinuxONE container deployment.
-- `frontend/`: reserved for the application interface.
+- [`frontend/`](frontend/README.md): dependency-free historical flood replay dashboard.
 
 ## Backend quick start
 
@@ -16,3 +16,14 @@ podman run --rm -p 8000:8000 riverguard-api:latest
 ```
 
 Open `http://localhost:8000/docs` for the API reference. See the [backend README](backend/README.md) for station endpoints and LinuxONE deployment details.
+
+## Replay dashboard
+
+Run the backend on port 8001 (or set a different API URL in the dashboard), then start the frontend:
+
+```sh
+cd frontend
+python3 -m http.server 5173
+```
+
+Open `http://localhost:5173` to replay historical events and compare baseline metrics. See the [frontend README](frontend/README.md) for API connection details and the scope of the illustrative trend view.

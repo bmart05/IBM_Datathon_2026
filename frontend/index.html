@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08121d" />
+    <title>RiverGuard — Flood replay</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="RiverGuard home"><span class="brand-mark">R</span><span>RIVERGUARD</span></a>
+        <div class="topbar-right"><span class="live-dot"></span><span id="connection-status">Connecting to API</span><a class="docs-link" id="docs-link" href="#" target="_blank" rel="noreferrer">API docs ↗</a></div>
+      </header>
+
+      <section class="intro">
+        <div class="eyebrow"><span class="eyebrow-line"></span> HISTORICAL EVENT LAB</div>
+        <h1>See the warning<br /><em>before the water rises.</em></h1>
+        <p>Replay real river observations, inspect the trend at any point, and compare it with a persistence baseline.</p>
+      </section>
+
+      <section class="toolbar" aria-label="Replay controls">
+        <label class="event-select"><span class="control-label">FLOOD EVENT</span><select id="event-select" disabled><option>Loading events…</option></select></label>
+        <div class="playback-controls">
+          <button id="play-button" class="play-button" type="button" disabled aria-label="Play replay">▶</button>
+          <div><span class="control-label">PLAYBACK</span><div class="speed-controls" role="group" aria-label="Playback speed"><button data-speed="1" class="speed active">1×</button><button data-speed="4" class="speed">4×</button><button data-speed="12" class="speed">12×</button></div></div>
+        </div>
+        <div class="api-config"><label class="control-label" for="api-url">API BASE URL</label><div class="api-input-wrap"><input id="api-url" type="url" spellcheck="false" /><button id="connect-button" type="button">Connect</button></div></div>
+      </section>
+
+      <section class="event-meta" aria-live="polite">
+        <div><h2 id="event-name">Choose an event</h2><p id="event-location">Historical USGS gauge observations</p></div>
+        <div class="meta-chips"><span id="event-period" class="chip">—</span><span id="event-count" class="chip">— observations</span><span id="event-source" class="source-link"></span></div>
+      </section>
+
+      <section class="main-grid">
+        <article class="panel chart-panel">
+          <div class="panel-heading"><div><div class="eyebrow small">RIVER STAGE</div><h3>Observation timeline</h3></div><div class="chart-legend"><span><i class="legend-line"></i>Observed</span><span><i class="legend-dash"></i>Minor flood stage</span></div></div>
+          <div class="chart-wrap" id="chart-wrap"><svg id="stage-chart" viewBox="0 0 1000 320" role="img" aria-label="River stage over time"></svg><div class="chart-empty" id="chart-empty">Select a flood event to load its observations.</div></div>
+          <div class="timeline-row"><span id="time-start">—</span><input id="timeline" type="range" min="0" max="0" value="0" disabled aria-label="Replay timeline" /><span id="time-end">—</span></div>
+          <div class="current-reading"><div><span class="control-label">REPLAY POSITION</span><strong id="current-time">—</strong></div><div class="reading-value"><strong id="current-stage">—</strong><span>m</span><small id="threshold-distance">—</small></div></div>
+        </article>
+
+        <aside class="side-stack">
+          <article class="panel forecast-panel">
+            <div class="eyebrow small">SIX-HOUR OUTLOOK</div><h3 id="outlook-title">Waiting for observations</h3>
+            <p id="outlook-copy" class="muted">Scrub to a point in the event to see what a simple one-hour trend would have indicated.</p>
+            <div class="threshold-meter"><div class="meter-label"><span>Current stage</span><span id="meter-values">— / — m</span></div><div class="meter-track"><div id="meter-fill" class="meter-fill"></div><div class="meter-threshold" title="Minor flood threshold"></div></div><div class="meter-label meter-caption"><span>River level</span><span>Minor flood threshold</span></div></div>
+            <div class="prediction-box"><span class="control-label">ILLUSTRATIVE TREND PEAK</span><div><strong id="trend-peak">—</strong><span>m</span><span id="trend-badge" class="badge neutral">Awaiting data</span></div><p id="trend-note">Uses the observations from the previous hour. This is not a calibrated forecast.</p></div>
+          </article>
+
+          <article class="panel score-panel">
+            <div class="panel-heading compact"><div><div class="eyebrow small">EVENT-LEVEL REPLAY</div><h3>Baseline comparison</h3></div><span class="info-dot" title="Overlapping six-hour windows are correlated. Results describe this event only.">i</span></div>
+            <div class="score-grid"><div class="score-cell"><span>Trend recall</span><strong id="trend-recall">—</strong></div><div class="score-cell"><span>Persistence recall</span><strong id="persistence-recall">—</strong></div><div class="score-cell"><span>Trend precision</span><strong id="trend-precision">—</strong></div><div class="score-cell"><span>Earliest trend lead</span><strong id="trend-lead">—</strong></div></div>
+            <div class="evaluation-note" id="evaluation-note">Loading event evaluation…</div>
+          </article>
+        </aside>
+      </section>
+
+      <footer><span>RiverGuard · decision support for human review</span><span>Historic USGS observations · trend is illustrative, not operational guidance</span></footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -25,7 +25,7 @@ The host needs rootless Podman (available on the configured LinuxONE account). F
 ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'mkdir -p ~/riverguard-backend'
 rsync -avz -e 'ssh -i ~/Downloads/yoyo12.pem' ./ linux1@148.100.77.165:~/riverguard-backend/
 ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'cd ~/riverguard-backend && podman build -t riverguard-api:latest .'
-ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'podman rm -f riverguard-api 2>/dev/null || true; podman run -d --name riverguard-api --restart=unless-stopped -p 8000:8000 riverguard-api:latest'
+ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'podman rm -f riverguard-api 2>/dev/null || true; podman run -d --name riverguard-api --restart=unless-stopped -e CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 -p 8000:8000 riverguard-api:latest'
 ```
 
 The process listens on server port 8000, but inbound 8000 is not allowed by the current host firewall. For a demo, create an SSH tunnel with `ssh -i ~/Downloads/yoyo12.pem -L 8001:127.0.0.1:8000 linux1@148.100.77.165`, then open `http://localhost:8001/docs` (port 8000 is already occupied locally). To make it directly reachable, add an inbound firewall/security-group rule for the demo client and use TLS before broader exposure. Container builds on LinuxONE use the native `s390x` Python image. Runtime dependencies avoid optional native extensions because the server build image has no compiler installed.
