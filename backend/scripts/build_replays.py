@@ -11,6 +11,39 @@ from urllib.request import Request, urlopen
 API = "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items"
 FT_TO_M = 0.3048
 EVENTS = {
+    "guadalupe-jul-2025": {
+        "name": "Guadalupe River flash flood at Kerrville — July 2025",
+        "start": "2025-07-03",
+        "end": "2025-07-06",
+        "station_name": "Guadalupe River at Kerrville, Texas",
+        "noaa_id": "KRRT2",
+        "usgs_id": "USGS-08166200",
+        "minor_stage_ft": 9.0,
+        "note": (
+            "Approved USGS stage samples include a 37.51 ft crest at 2025-07-04T11:45:00Z. "
+            "The six-hour crossing target uses NOAA's published 9 ft minor-flood threshold."
+        ),
+    },
+    "guadalupe-control-jan-2024": {
+        "name": "Guadalupe River at Kerrville — January 2024 control",
+        "start": "2024-01-01",
+        "end": "2024-02-01",
+        "station_name": "Guadalupe River at Kerrville, Texas",
+        "noaa_id": "KRRT2",
+        "usgs_id": "USGS-08166200",
+        "minor_stage_ft": 9.0,
+        "role": "control",
+    },
+    "guadalupe-control-feb-2024": {
+        "name": "Guadalupe River at Kerrville — February 2024 control",
+        "start": "2024-02-01",
+        "end": "2024-03-01",
+        "station_name": "Guadalupe River at Kerrville, Texas",
+        "noaa_id": "KRRT2",
+        "usgs_id": "USGS-08166200",
+        "minor_stage_ft": 9.0,
+        "role": "control",
+    },
     "wimberley-may-2015": {
         "name": "Blanco River flood at Wimberley — May 2015",
         "start": "2015-05-23",
@@ -178,15 +211,19 @@ def fetch_replay(replay_id: str) -> dict:
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "license": "U.S. government data; public domain",
         },
+        "threshold_source": {
+            "name": "NOAA National Water Prediction Service gauge flood categories",
+            "url": f"https://water.noaa.gov/gauges/{event['noaa_id'].lower()}",
+        },
         "data_quality": {
             "observation_count": len(observations),
             "highest_sample_ft": peak["stage_ft"],
             "highest_sample_time": peak["time"],
-            "note": (
+            "note": event.get("note", (
                 "Sensor records end during the flood rise; NOAA's 44.9 ft May 2015 crest is an indirect estimate, not a sample in this time series. Missing intervals are preserved."
                 if replay_id == "wimberley-may-2015"
                 else "Missing intervals are preserved; forecasts spanning gaps are excluded from evaluation."
-            ),
+            )),
         },
         "observations": observations,
     }
