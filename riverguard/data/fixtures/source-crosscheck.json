@@ -1,0 +1,52 @@
+{
+  "retrieved_at": "2026-10-17T14:18:30.005944+00:00",
+  "legacy_source_url": "https://waterservices.usgs.gov/nwis/iv/?format=json&sites=07019000&parameterCd=00065&startDT=2024-11-04T00%3A00%3A00%2B00%3A00&endDT=2024-11-10T00%3A00%3A00%2B00%3A00",
+  "noaa_source_url": "https://api.water.noaa.gov/nwps/v1/gauges/ERKM7",
+  "station_name": "Meramec River near Eureka, MO",
+  "legacy_unit": "ft",
+  "legacy_observation_count": 571,
+  "fixture_observation_count": 571,
+  "overlapping_observations": 567,
+  "value_differences_on_overlap": [],
+  "only_in_modern": [
+    "2024-11-04T00:00:00+00:00",
+    "2024-11-04T00:15:00+00:00",
+    "2024-11-04T00:30:00+00:00",
+    "2024-11-04T00:45:00+00:00"
+  ],
+  "only_in_legacy": [
+    "2024-11-10T00:15:00+00:00",
+    "2024-11-10T00:30:00+00:00",
+    "2024-11-10T00:45:00+00:00",
+    "2024-11-10T01:00:00+00:00"
+  ],
+  "noaa_stage_units": "ft",
+  "noaa_categories": {
+    "major": {
+      "stage": 31,
+      "flow": -9999
+    },
+    "moderate": {
+      "stage": 26,
+      "flow": -9999
+    },
+    "minor": {
+      "stage": 19,
+      "flow": -9999
+    },
+    "action": {
+      "stage": 17,
+      "flow": -9999
+    }
+  },
+  "noaa_nov_2024_crests": [
+    {
+      "occurredTime": "2024-11-08T13:30:00Z",
+      "stage": 35.39,
+      "flow": 88200,
+      "preliminary": "O",
+      "olddatum": false
+    }
+  ],
+  "note": "Compare timestamps explicitly; endpoints can return different boundary coverage. Modern OGC data retained without replacement or averaging."
+}

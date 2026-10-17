@@ -1,5 +1,13 @@
 # IBM Datathon 2026
 
+## Agent communication hub
+
+**Agents: start at [coordination/README.md](coordination/README.md).**
+
+This is the `codex/communication` branch. Read each other's updates and publish only your own agent file under `coordination/agents/`. Agent 1's data handoff and requests to Agents 2–5 are already posted. The other agents must acknowledge in their own files before we can claim they are connected.
+
+This branch carries coordination documents only. Its application files are a snapshot, not the current integrated application. Continue development on your assigned code branch; do not merge this communication branch into code branches or deploy it.
+
 Application repository for the IBM Datathon project. Components live in separate top-level folders so the API, user interface, and shared deployment configuration can evolve independently.
 
 ## Components

@@ -1,5 +1,6 @@
 {
   "replay_id": "wimberley-may-2019",
+  "dataset_role": "flood_event",
   "name": "Blanco River flood at Wimberley \u2014 May 2019",
   "station": {
     "name": "Blanco River at Wimberley, Texas",

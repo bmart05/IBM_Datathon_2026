@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from bisect import bisect_left, bisect_right
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
@@ -278,6 +279,7 @@ def list_replays():
             "name": replay["name"],
             "station": replay["station"],
             "period": replay["period"],
+            "dataset_role": replay.get("dataset_role", "flood_event"),
             "target": replay["target"],
             "data_quality": replay["data_quality"],
         })
@@ -288,6 +290,113 @@ def list_replays():
 def replay(replay_id: str):
     """Return a complete historic observation series for deterministic playback."""
     return load_replay(replay_id)
+
+
+def precision_recall_auc(rows: list[dict], method: str) -> float | None:
+    score_key = "persistence_score" if method == "persistence" else "trend_score"
+    positives = sum(row["actual"] for row in rows)
+    negatives = len(rows) - positives
+    if not positives or not negatives:
+        return None
+    ranked = sorted(rows, key=lambda row: row[score_key], reverse=True)
+    tp = fp = 0
+    previous_recall = 0.0
+    previous_precision = 1.0
+    area = 0.0
+    index = 0
+    while index < len(ranked):
+        score = ranked[index][score_key]
+        while index < len(ranked) and ranked[index][score_key] == score:
+            if ranked[index]["actual"]:
+                tp += 1
+            else:
+                fp += 1
+            index += 1
+        recall = tp / positives
+        precision = tp / (tp + fp)
+        area += (recall - previous_recall) * (precision + previous_precision) / 2
+        previous_recall = recall
+        previous_precision = precision
+    return round(area, 3)
+
+
+def fit_isotonic_probability_map(rows: list[dict], method: str) -> list[dict] | None:
+    score_key = "persistence_score" if method == "persistence" else "trend_score"
+    grouped = {}
+    for row in rows:
+        score = row[score_key]
+        count, positives = grouped.get(score, (0, 0))
+        grouped[score] = (count + 1, positives + int(row["actual"]))
+    positive_count = sum(positive for _, positive in grouped.values())
+    sample_count = sum(count for count, _ in grouped.values())
+    if len(grouped) < 2 or not positive_count or positive_count == sample_count:
+        return None
+
+    blocks = []
+    for score, (count, positives) in sorted(grouped.items()):
+        blocks.append({"max_score": score, "count": count, "positives": positives})
+        while len(blocks) > 1:
+            previous, current = blocks[-2:]
+            if previous["positives"] / previous["count"] <= current["positives"] / current["count"]:
+                break
+            blocks[-2:] = [{
+                "max_score": current["max_score"],
+                "count": previous["count"] + current["count"],
+                "positives": previous["positives"] + current["positives"],
+            }]
+    return [
+        {"max_score": block["max_score"], "probability": block["positives"] / block["count"]}
+        for block in blocks
+    ]
+
+
+def apply_isotonic_probability_map(score: float, calibration: list[dict]) -> float:
+    for block in calibration:
+        if score <= block["max_score"]:
+            return block["probability"]
+    return calibration[-1]["probability"]
+
+
+def evaluate_probability_calibration(
+    development_rows: list[dict], held_out_rows: list[dict], method: str, flood_event_count: int,
+) -> dict:
+    score_key = "persistence_score" if method == "persistence" else "trend_score"
+    calibration = fit_isotonic_probability_map(development_rows, method)
+    if not calibration or not held_out_rows:
+        return {"status": "unavailable", "reason": "Insufficient development labels or held-out observations."}
+    scored = [
+        (apply_isotonic_probability_map(row[score_key], calibration), int(row["actual"]))
+        for row in held_out_rows
+    ]
+    brier = sum((probability - actual) ** 2 for probability, actual in scored) / len(scored)
+    bins = []
+    weighted_gap = 0.0
+    for bin_index in range(10):
+        members = [item for item in scored if min(9, int(item[0] * 10)) == bin_index]
+        if not members:
+            continue
+        predicted = sum(item[0] for item in members) / len(members)
+        observed = sum(item[1] for item in members) / len(members)
+        gap = abs(predicted - observed)
+        weighted_gap += len(members) / len(scored) * gap
+        bins.append({
+            "count": len(members),
+            "mean_predicted_probability": round(predicted, 3),
+            "observed_crossing_rate": round(observed, 3),
+        })
+    return {
+        "method": "Isotonic calibration fitted only on pre-2024 development windows",
+        "development_origins": len(development_rows),
+        "held_out_origins": len(held_out_rows),
+        "held_out_positive_windows": sum(actual for _, actual in scored),
+        "brier_score": round(brier, 4),
+        "expected_calibration_error": round(weighted_gap, 4),
+        "held_out_calibration_bins": bins,
+        "held_out_flood_episodes": flood_event_count,
+        "uncertainty": (
+            "No confidence interval reported: held-out flood episodes are few and the six-hour forecast windows overlap."
+        ),
+    }
 
 
 def confusion_metrics(rows: list[dict], method: str, threshold_time: datetime | None) -> dict:
@@ -310,6 +419,7 @@ def confusion_metrics(rows: list[dict], method: str, threshold_time: datetime | 
         "precision": round(precision, 3) if precision is not None else None,
         "recall": round(recall, 3) if recall is not None else None,
         "false_alarm_rate": round(fp / (fp + tn), 3) if fp + tn else None,
+        "pr_auc": precision_recall_auc(rows, method),
         "first_alert_lead_minutes": lead_time,
     }
 
@@ -375,7 +485,7 @@ def event_level_metrics(
     return metrics, event_results
 
 
-def evaluate_replay(fixture: dict) -> dict:
+def evaluate_replay(fixture: dict, include_origin_rows: bool = False) -> dict:
     parsed = [
         {**row, "dt": datetime.fromisoformat(row["time"].replace("Z", "+00:00"))}
         for row in fixture["observations"]
@@ -383,16 +493,16 @@ def evaluate_replay(fixture: dict) -> dict:
     horizon = timedelta(hours=fixture["target"]["horizon_hours"])
     lookback = timedelta(hours=1)
     threshold = fixture["target"]["threshold_m"]
+    timestamps = [row["dt"] for row in parsed]
     origins = []
     excluded = 0
+    stage_errors = {"persistence": [], "trend": []}
 
     for index, current in enumerate(parsed):
-        past = [row for row in parsed[:index + 1] if current["dt"] - lookback <= row["dt"]]
-        future = []
-        for row in parsed[index + 1:]:
-            if row["dt"] > current["dt"] + horizon:
-                break
-            future.append(row)
+        past_start = bisect_left(timestamps, current["dt"] - lookback, 0, index + 1)
+        past = parsed[past_start:index + 1]
+        future_end = bisect_right(timestamps, current["dt"] + horizon, index + 1)
+        future = parsed[index + 1:future_end]
         if len(past) < 3 or not future or future[-1]["dt"] < current["dt"] + horizon - timedelta(minutes=30):
             excluded += 1
             continue
@@ -417,11 +527,20 @@ def evaluate_replay(fixture: dict) -> dict:
             current["stage_m"],
             current["stage_m"] + slope_per_hour * horizon.total_seconds() / 3600,
         )
+        actual_peak = max(row["stage_m"] for row in future)
+        persistence_score = current["stage_m"] / threshold
+        trend_score = projected_peak / threshold
+        stage_errors["persistence"].append(abs(current["stage_m"] - actual_peak))
+        stage_errors["trend"].append(abs(projected_peak - actual_peak))
         origins.append({
             "time": current["dt"],
             "actual": any(row["stage_m"] >= threshold for row in future),
             "persistence": current["stage_m"] >= threshold,
             "trend": projected_peak >= threshold,
+            "persistence_score": persistence_score,
+            "trend_score": trend_score,
+            "persistence_stage_error_m": abs(current["stage_m"] - actual_peak),
+            "trend_stage_error_m": abs(projected_peak - actual_peak),
         })
 
     crossings = [row["dt"] for row in parsed if row["stage_m"] >= threshold]
@@ -432,9 +551,10 @@ def evaluate_replay(fixture: dict) -> dict:
         event_metrics[method], event_details[method] = event_level_metrics(
             origins, parsed, method, threshold, horizon
         )
-    return {
+    result = {
         "replay_id": fixture["replay_id"],
         "station_id": fixture["station"]["noaa_id"],
+        "dataset_role": fixture.get("dataset_role", "flood_event"),
         "target": fixture["target"],
         "evaluation": {
             "forecast_origins_evaluated": len(origins),
@@ -444,6 +564,10 @@ def evaluate_replay(fixture: dict) -> dict:
             "methods": {
                 "persistence": confusion_metrics(origins, "persistence", first_crossing),
                 "linear_trend_1h": confusion_metrics(origins, "trend", first_crossing),
+            },
+            "six_hour_peak_stage_mae_m": {
+                method: round(sum(errors) / len(errors), 3) if errors else None
+                for method, errors in stage_errors.items()
             },
             "event_level": {
                 "definition": (
@@ -463,6 +587,9 @@ def evaluate_replay(fixture: dict) -> dict:
             ],
         },
     }
+    if include_origin_rows:
+        result["_origin_rows"] = origins
+    return result
 
 
 @app.get("/v1/replays/{replay_id}/evaluation")
@@ -473,11 +600,17 @@ def replay_evaluation(replay_id: str):
 
 @app.get("/v1/replays/evaluation/summary")
 def replay_evaluation_summary():
-    """Aggregate baseline results by observed flood episode across bundled replays."""
-    replay_results = [
-        evaluate_replay(load_replay(path.stem))
-        for path in sorted(REPLAY_DIR.glob("*.json"))
-    ]
+    """Report event, chronological holdout, PR-AUC, and event-free control results."""
+    replay_results = []
+    for path in sorted(REPLAY_DIR.glob("*.json")):
+        fixture = load_replay(path.stem)
+        evaluation = evaluate_replay(fixture, include_origin_rows=True)
+        origin_rows = evaluation.pop("_origin_rows")
+        replay_results.append({
+            **evaluation,
+            "fixture": fixture,
+            "origins": origin_rows,
+        })
     method_names = {"persistence": "persistence", "linear_trend_1h": "trend"}
     summaries = {}
     for output_name, method in method_names.items():
@@ -504,6 +637,70 @@ def replay_evaluation_summary():
             "event_precision": round(detected_events / (detected_events + false_alarms), 3)
             if detected_events + false_alarms else None,
         }
+    cutoff = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    development = [
+        item for item in replay_results
+        if datetime.fromisoformat(item["fixture"]["period"]["start"]).replace(tzinfo=timezone.utc) < cutoff
+    ]
+    development_ids = {item["replay_id"] for item in development}
+    held_out = [item for item in replay_results if item["replay_id"] not in development_ids]
+    development_rows = [row for item in development for row in item["origins"]]
+    held_out_rows = [row for item in held_out for row in item["origins"]]
+    event_free_controls = [item for item in held_out if item["dataset_role"] == "control"]
+    held_out_flood_rows = [
+        row for item in held_out if item["dataset_role"] != "control" for row in item["origins"]
+    ]
+    held_out_control_rows = [row for item in event_free_controls for row in item["origins"]]
+    exposure_months = 0.0
+    for item in event_free_controls:
+        fixture_times = [
+            datetime.fromisoformat(row["time"].replace("Z", "+00:00"))
+            for row in item["fixture"]["observations"]
+        ]
+        intervals = [b - a for a, b in zip(fixture_times, fixture_times[1:]) if b > a]
+        sample_seconds = median(intervals).total_seconds() if intervals else 0.0
+        exposure_months += len(item["origins"]) * sample_seconds / (30.4375 * 24 * 3600)
+    held_out_methods = {}
+    for output_name, method in method_names.items():
+        control_false_alarms = sum(
+            item["evaluation"]["event_level"]["methods"][output_name]["false_alarm_episodes"]
+            for item in event_free_controls
+        )
+        flood_events = [
+            item["evaluation"]["event_level"]["methods"][output_name]
+            for item in held_out if item["dataset_role"] != "control"
+        ]
+        total_events = sum(item["threshold_crossing_events"] for item in flood_events)
+        detected_events = sum(item["detected_events"] for item in flood_events)
+        leads = [
+            event["warning_lead_minutes"]
+            for item in flood_events for event in item["events"]
+            if event["warning_lead_minutes"] is not None
+        ]
+        flood_errors = [row[f"{method}_stage_error_m"] for row in held_out_flood_rows]
+        control_errors = [row[f"{method}_stage_error_m"] for row in held_out_control_rows]
+        calibration = evaluate_probability_calibration(
+            development_rows, held_out_rows, method, total_events
+        )
+        held_out_methods[output_name] = {
+            "threshold_crossing_events": total_events,
+            "detected_events": detected_events,
+            "missed_events": total_events - detected_events,
+            "event_detection_rate": round(detected_events / total_events, 3) if total_events else None,
+            "median_warning_lead_minutes": round(median(leads)) if leads else None,
+            "window_metrics": confusion_metrics(held_out_rows, method, None),
+            "six_hour_peak_stage_mae_m": {
+                "flood_event_windows": round(sum(flood_errors) / len(flood_errors), 3)
+                if flood_errors else None,
+                "event_free_control_windows": round(sum(control_errors) / len(control_errors), 3)
+                if control_errors else None,
+            },
+            "event_free_control_exposure_months": round(exposure_months, 3),
+            "false_alarm_episodes_in_controls": control_false_alarms,
+            "false_alarms_per_event_free_month": round(control_false_alarms / exposure_months, 3)
+            if exposure_months else None,
+            "probability_calibration": calibration,
+        }
     return {
         "replay_count": len(replay_results),
         "event_level": {
@@ -518,9 +715,18 @@ def replay_evaluation_summary():
             ],
             "limitations": [
                 "Forecast origins are collapsed into observed threshold-crossing events; false-alert origins within one forecast horizon are merged.",
-                "Results describe the bundled episodes only and are not a held-out validation or evidence of generalization.",
+                "The chronological holdout applies a fixed cutoff to the bundled replays; the baselines do not fit parameters on the development set.",
+                "Held-out PR-AUC and stage error use overlapping six-hour windows and are descriptive, not independent samples.",
+                "Control exposure covers only the bundled event-free periods; false alarms per month should not be generalized from these few months.",
+                "The experimental isotonic calibration is evaluated only in this summary and is not used by the deployed prediction endpoint.",
                 "Flood events at the same station are distinct episodes, not independent station or watershed samples.",
             ],
+        },
+        "chronological_holdout": {
+            "cutoff": cutoff.date().isoformat(),
+            "development_replays": [item["replay_id"] for item in development],
+            "held_out_replays": [item["replay_id"] for item in held_out],
+            "held_out_methods": held_out_methods,
         },
     }
 
