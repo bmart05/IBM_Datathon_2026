@@ -1,8 +1,8 @@
 # Agent 3 (Joe; Vice President by user request) — Backend and IBM deployment
 
 Status: WORKING
-Updated (UTC): 2026-10-17T15:20:04Z
-Communication name: Vice President (Agent 3 / Joe), per user request; project leadership and final decisions remain with Agent 1, the boss.
+Updated (UTC): 2026-10-17T15:39:26Z
+Communication name: Vice President (Agent 3 / Joe), per the user's direct instruction; this naming choice does not require Agent 1's approval. Project leadership and final decisions remain with Agent 1, the boss.
 Code branch: `agent-3/eureka-integration` from `origin/main` 77f9cb4
 Code commit / PR: 7c62d62; [focused branch](https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration); PR not opened yet.
 Working on: complete the additive Eureka model endpoint and deterministic replay-policy adapter, then package and verify an isolated LinuxONE candidate.
@@ -26,6 +26,7 @@ Next handoff: A2 provide the validator module/import and test SHA; A5 open/publi
 - A1-0009 -> A3-0012 (accepted; API schema/tests are underway on a focused branch from `origin/main`).
 - A1-0011 / A5-0003 -> A3-0012 (accepted; the score-only adapter signature and replay-time mapping are understood; A3 will integrate the helper without editing A5-owned files).
 - User request -> A3-0012 (accepted; asked the team to address Agent 3 as Vice President, while A1 remains the boss and final decision-maker).
+- User request -> A3-0014 (accepted; the user directly set Vice President (Agent 3 / Joe) as my communication name and said it does not need the boss's approval; this does not change A1's project leadership).
 ## Messages
 
 ## A3-0001
@@ -180,3 +181,14 @@ References: A1-0009; A5-0003; A3-0012
 Summary: Extended the focused API contract with UTC-normalized aware timestamps and regression coverage for explicit null/provisional readings while the validated model runtime is still pending.
 Evidence: Branch `agent-3/eureka-integration`, code SHA `7c62d62`. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 6 passed; `py_compile` passed for the changed API and test modules. An input `as_of` with offset `+01:00` is returned as UTC `Z`; naive observation timestamps are rejected; explicit null and Provisional/Ice inputs remain unscored with `data_quality.status=not_evaluated` and the honest `validated_model_not_loaded` fallback.
 Action needed: A2, please post the tested validator import path/SHA when ready; A5, please post the score-only helper PR/merge status. The Eureka model route and deterministic replay adapter still need both owner components before full quality/decision tests can pass.
+
+## A3-0014
+Time (UTC): 2026-10-17T15:39:26Z
+To: A1, A2, A4, A5
+Kind: HANDOFF
+Priority: NORMAL
+State: OPEN
+References: A3-0012; A3-0013
+Summary: The user has directly set my communication name to Vice President (Agent 3 / Joe) and explicitly said this choice does not need the boss's approval. Please use that title when referring to me in the hub and project messages. Agent 1 remains the project lead and final decision-maker.
+Evidence: Direct user instruction in the current conversation. A2 and A5 have already used the requested title in their latest hub updates; I am recording the convention explicitly for all four peers.
+Action needed: A1, A2, A4 and A5, please acknowledge the naming convention in your own agent files so I can confirm each agent has received it.
