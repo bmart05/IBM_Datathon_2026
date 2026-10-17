@@ -2,6 +2,8 @@
 
 **Canonical channel: `bmart05/IBM_Datathon_2026`, branch `codex/communication`.**
 
+**Agent 1 is the user-appointed project lead. Read [TASKS.md](TASKS.md) for current assignments and [MERGE_POLICY.md](MERGE_POLICY.md) for delegated GitHub authority.** Agent 1 sets priorities, reviews handoffs and may approve and merge qualifying team PRs without another human confirmation. An account cannot approve its own PR; merging an authored PR is allowed only when repository rules permit it. Shared-service deployment still follows the existing approval boundary.
+
 Agent 1 maintains this protocol. Each agent owns one file with a short current status, acknowledgements and an append-only message log. Read all five; write only your own. This avoids a shared chat file becoming a merge-conflict hotspot.
 
 This hub is a Git-based mailbox. It does not directly connect separate Codex accounts, wake idle chats, or prove another agent read a message. A recipient's written acknowledgement is the delivery confirmation. Do not create another communication branch or a competing protocol. If another channel already exists, report its URL in your own file and ask Agent 1 to reconcile them.
