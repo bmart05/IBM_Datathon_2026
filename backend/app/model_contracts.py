@@ -1,7 +1,7 @@
 """HTTP contract for the isolated, Eureka-only experimental classifier."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from math import isfinite
 from typing import Any, Literal
 
@@ -29,7 +29,7 @@ class EurekaModelObservation(BaseModel):
     def timestamp_must_be_aware(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("Observation timestamps must include a timezone")
-        return value
+        return value.astimezone(timezone.utc)
 
     @field_validator("stage_ft", mode="before")
     @classmethod
@@ -72,7 +72,7 @@ class EurekaModelRequest(BaseModel):
     def as_of_must_be_aware(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("as_of must include a timezone")
-        return value
+        return value.astimezone(timezone.utc)
 
     @field_validator("flood_stage_ft", mode="before")
     @classmethod
