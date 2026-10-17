@@ -46,41 +46,35 @@ per-replay results. It writes the Eureka estimator and metadata to
 the model inside LinuxONE with its installed package versions before serving
 it there.
 
-## Evaluation results
+## Evaluation status
 
-The current run uses all 14 replay files: **34,375 observations** from three
-stations, labelled into **31,130 forecast origins** (199 positive, 30,931
-negative). The two new Guadalupe control windows and July 2025 flood replay
-come from the updated backend branch. The July event uses the NOAA minor-flood
-threshold of 9 ft at USGS 08166200.
-The positive windows are highly concentrated around flood events; adjacent
-forecast origins overlap and are not independent samples.
+Run `python train_replays.py` to regenerate counts and metrics after applying
+the shared input validator. The command reports excluded training windows by
+reason alongside the metrics, source checksums and replay counts. Metrics from
+earlier runs are not comparable because they did not enforce the full six-hour
+lookback quality contract. Report replay-specific results with the small event
+count and overlapping forecast origins in mind; they are not calibrated
+operational forecast estimates.
 
-| Evaluation | Method | Precision | Recall | F1 | False positive windows | Missed positive windows |
-|---|---|---:|---:|---:|---:|---:|
-| Eureka, 2024+ holdout | Threshold-normalized HistGradientBoosting | 0.661 | 0.813 | 0.729 | 20 | 9 |
-| Eureka, 2024+ holdout | Trend extrapolation | 0.511 | 1.000 | 0.676 | 46 | 0 |
-| Wimberley, 2019+ holdout | Station-specific HistGradientBoosting | 0.007 | 0.452 | 0.015 | 4,415 | 40 |
-| Wimberley, 2019+ holdout | Trend extrapolation | 0.760 | 0.521 | 0.618 | 12 | 35 |
-| All stations, 2019+ holdout | Cross-gauge HistGradientBoosting | 0.302 | 0.277 | 0.289 | 90 | 102 |
-| All stations, 2019+ holdout | Trend extrapolation | 0.597 | 0.610 | 0.604 | 58 | 55 |
+The refreshed run used 14 replay files (34,375 observations) and retained
+30,913 labelled origins (199 positive). The validator excluded 1,774 candidate
+origins: 718 with insufficient left-boundary history, 581 with missing
+observations, and 475 with gappy lookback. The Eureka 2024+ test contains
+6,050 origins (48 positive); the Wimberley 2019+ test contains 17,684 (73
+positive); the cross-gauge test contains 29,588 (141 positive).
 
-Eureka's held-out model detected both flood replay events and raised no alerts
-in either control replay. Its average precision was 0.777, ROC AUC 0.998, and
-Brier score 0.0044. The Wimberley-only model raised alerts in both held-out
-control months, so it is **not suitable for deployment**. In the cross-gauge
-report, the combined model detected the held-out Eureka events and the 2019
-Wimberley event, but missed all 20 positive windows in the July 2025 Guadalupe
-flood replay. It underperformed the trend baseline overall. Relative-stage
-features alone do not make one river's model transfer reliably to another.
+| Holdout | Model P / R / F1 | Trend baseline P / R / F1 | Model FP / FN |
+|---|---:|---:|---:|
+| Eureka 2024+ | 0.661 / 0.812 / 0.729 | 0.511 / 1.000 / 0.676 | 20 / 9 |
+| Wimberley 2019+ | 0.008 / 0.452 / 0.015 | 0.760 / 0.521 / 0.618 | 4,355 / 40 |
+| Cross-gauge 2019+ | 0.271 / 0.340 / 0.302 | 0.597 / 0.610 / 0.604 | 129 / 93 |
 
-These are replay-specific estimates, not calibrated operational forecasts.
-There are only two held-out Eureka floods, one Wimberley flood and one
-Guadalupe flood;
-row-level metrics overstate evidence because many origins describe the same
-event. The result supports a Eureka-only prototype, with human review and the
-trend baseline retained as a comparator. It does not support claiming
-generalization across gauges.
+Eureka average precision is 0.777, ROC AUC 0.998 and Brier score 0.0045.
+The Wimberley model raised alerts in both held-out 2024 controls. The
+cross-gauge model underperformed the trend baseline and missed the Guadalupe
+flood replay. Retain the Eureka-only scope; the small number of independent
+flood events and overlapping origins do not support general flood forecasting
+claims.
 
 ## Inference handoff
 
@@ -90,18 +84,25 @@ missing values and source quality annotations, and does not interpolate gaps.
 Its Eureka November 2024 fixture has two documented gaps; historical-window
 reports cover the 2015–16 and 2017 Eureka replay spans. Those source checks
 improve provenance and data handling, but do not establish model accuracy. The
-loader's `timestamp` and `stage_ft` columns can be passed directly to this
-model. Keep replay evaluation reproducible by training from committed replay
-files; do not silently refresh retrospective source data during evaluation.
+`validate_model_input` is the shared serving contract. It accepts 15- or
+30-minute cadence, filters future rows before value, quality, duplicate and gap
+checks, requires `Approved` or legacy `A` approval, rejects nonempty
+qualifiers, missing values and conflicting duplicates, and enforces the
+six-hour left boundary plus its one-cadence lag sample. Maximum adjacent gap
+and newest-reading age are each 1.5 times cadence. It returns machine-readable
+quality metadata and named fallbacks. Replay training applies the same
+validator rules using the replay's measured cadence. Keep evaluation
+reproducible by training from committed replay files.
 
 ```python
-from riverguard.data import load_stage, observations_as_of
-from model import predict_risk, load_artifact
+from riverguard.data import load_stage
+from backend.ml.model import predict_risk, load_artifact
 
 observations = load_stage("07019000", "2024-11-04", "2024-11-10")
-observations = observations_as_of(observations, "2024-11-07T18:00:00Z")
 model = load_artifact("backend/artifacts/ml/USGS-07019000")
-result = predict_risk(observations, "2024-11-07T18:00:00Z", model=model)
+result = predict_risk(
+    observations, "2024-11-07T18:00:00Z", model=model, sample_interval_minutes=15
+)
 ```
 
 The data package is not yet wired into the backend container/API. That needs an
@@ -112,14 +113,16 @@ that deployment wiring separate.
 The saved Eureka artifact can be loaded with:
 
 ```python
-from model import load_artifact, predict_risk
+from backend.ml.model import load_artifact, predict_risk
 
 model = load_artifact("backend/artifacts/ml/USGS-07019000")
-result = predict_risk(observations, "2024-11-07T18:00:00Z", model=model)
+result = predict_risk(
+    observations, "2024-11-07T18:00:00Z", model=model, sample_interval_minutes=15
+)
 ```
 
-For another threshold, pass `flood_stage_ft` explicitly. `predict_risk()`
-filters records after `as_of` before creating features. If the validated model
-is absent or lacks enough recent history, it returns a null probability and a
-named fallback instead of inventing an estimate. The backend should expose the
-model version and keep this probability distinct from alert-policy thresholds.
+For another threshold, pass `flood_stage_ft` explicitly. Set
+`sample_interval_minutes` to the verified Eureka cadence. `predict_risk()`
+filters records after `as_of` before validating history and creating features.
+If the model is absent or history is unusable, it returns a null probability
+and named fallback. Keep this probability distinct from alert-policy thresholds.

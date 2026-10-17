@@ -13,10 +13,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+# Make the shared repository-level riverguard package available when the
+# standalone replay script is launched from backend/ml as documented.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    from .validation import source_quality_fallback, validate_model_input
+except ImportError:  # Support `python train_replays.py` from this directory.
+    from validation import source_quality_fallback, validate_model_input
 
 MODEL_NAME = "hist_gradient_boosting"
 MODEL_VERSION = "v2"
@@ -119,34 +131,83 @@ def build_examples(
     """
     if horizon_hours <= 0 or cadence_minutes <= 0:
         raise ValueError("horizon_hours and cadence_minutes must be positive")
-    frame = _clean_observations(observations)
+    required = {"timestamp", "stage_ft"}
+    if not required.issubset(observations.columns):
+        raise ValueError("observations must include timestamp and stage_ft")
+    frame = observations.copy()
+    frame["timestamp"] = pd.to_datetime(frame.timestamp, utc=True, errors="coerce")
+    frame["timestamp"] = frame.timestamp.dt.as_unit("ns")
+    frame["stage_ft"] = pd.to_numeric(frame.stage_ft, errors="coerce")
+    frame = frame.dropna(subset=["timestamp"]).sort_values("timestamp", kind="stable").reset_index(drop=True)
     if len(frame) < 3:
         return pd.DataFrame(columns=["timestamp", "threshold_ft", *FEATURE_COLUMNS, "label"])
-    times = frame.timestamp
-    times_ns = times.astype("int64").to_numpy()
-    stages = frame.stage_ft.to_numpy(dtype=float)
     records: list[dict[str, Any]] = []
     gap_limit_ns = pd.Timedelta(minutes=cadence_minutes * 1.5).value
     horizon_ns = pd.Timedelta(hours=horizon_hours).value
 
-    for i, at in enumerate(times):
-        stage = stages[i]
+    exclusion_counts: dict[str, int] = {}
+    times_ns_all = frame.timestamp.astype("int64").to_numpy()
+    unique_times = frame.timestamp.drop_duplicates().tolist()
+    for at in unique_times:
+        at_ns = at.value
+        cutoff_end = int(np.searchsorted(times_ns_all, at_ns, side="right"))
+        earliest_needed_ns = at_ns - pd.Timedelta(hours=6).value - pd.Timedelta(minutes=cadence_minutes).value
+        history_start = int(np.searchsorted(times_ns_all, earliest_needed_ns, side="left"))
+        raw_history = frame.iloc[history_start:cutoff_end]
+        validated = validate_model_input(
+            raw_history,
+            as_of=at,
+            sample_interval_minutes=cadence_minutes,
+            allowed_cadences=(cadence_minutes,),
+            include_report=False,
+        )
+        if not validated.usable:
+            exclusion_counts[validated.fallback] = exclusion_counts.get(validated.fallback, 0) + 1
+            continue
+        history = validated.observations
+        if history.empty:
+            continue
+        stage = float(history.stage_ft.iloc[-1])
         if stage >= flood_stage_ft:
             continue
-        # Require complete forward observation through the horizon.
-        at_ns = times_ns[i]
-        end_ns = at_ns + horizon_ns
-        future_end = int(np.searchsorted(times_ns, end_ns, side="right"))
-        if future_end <= i + 1 or times_ns[future_end - 1] < end_ns - gap_limit_ns:
-            continue
-        if np.diff(times_ns[i:future_end]).max(initial=0) > gap_limit_ns:
-            continue
-        features = _features_from_arrays(times_ns, stages, i + 1, at_ns, flood_stage_ft)
+        features = _features_at(history, at, flood_stage_ft)
         if features is None:
+            exclusion_counts["insufficient_history"] = exclusion_counts.get("insufficient_history", 0) + 1
             continue
-        label = int(bool((stages[i + 1:future_end] >= flood_stage_ft).any()))
+        # Outcome rows are strictly after the origin. Preserve duplicate times
+        # to detect conflicting values rather than silently selecting a row.
+        future_start = cutoff_end
+        end_ns = at_ns + horizon_ns
+        future_end = int(np.searchsorted(times_ns_all, end_ns, side="right"))
+        future = frame.iloc[future_start:future_end].copy()
+        if future.empty or int(future.timestamp.iloc[-1].value) < end_ns - gap_limit_ns:
+            exclusion_counts["missing_observations"] = exclusion_counts.get("missing_observations", 0) + 1
+            continue
+        observed_ns = np.concatenate(([at_ns], future.timestamp.astype("int64").to_numpy()))
+        if np.diff(observed_ns).max(initial=0) > gap_limit_ns:
+            exclusion_counts["gappy_history"] = exclusion_counts.get("gappy_history", 0) + 1
+            continue
+        future["stage_ft"] = pd.to_numeric(future.stage_ft, errors="coerce")
+        if future.stage_ft.isna().any():
+            exclusion_counts["missing_observations"] = exclusion_counts.get("missing_observations", 0) + 1
+            continue
+        future_failures = [source_quality_fallback(row) for _, row in future.iterrows()]
+        future_fallback = ("unsupported_qualifier" if "unsupported_qualifier" in future_failures
+                           else "quality_not_approved" if "quality_not_approved" in future_failures else None)
+        if future_fallback:
+            exclusion_counts[future_fallback] = exclusion_counts.get(future_fallback, 0) + 1
+            continue
+        if future.timestamp.duplicated().any():
+            dup = future.loc[future.timestamp.duplicated(keep=False)]
+            if (dup.groupby("timestamp").stage_ft.nunique(dropna=False) > 1).any():
+                exclusion_counts["conflicting_duplicates"] = exclusion_counts.get("conflicting_duplicates", 0) + 1
+                continue
+            future = future.drop_duplicates("timestamp", keep="first")
+        label = int(bool((future.stage_ft >= flood_stage_ft).any()))
         records.append({"timestamp": at, "threshold_ft": flood_stage_ft, **features, "label": label})
-    return pd.DataFrame.from_records(records, columns=["timestamp", "threshold_ft", *FEATURE_COLUMNS, "label"])
+    result = pd.DataFrame.from_records(records, columns=["timestamp", "threshold_ft", *FEATURE_COLUMNS, "label"])
+    result.attrs["excluded_windows"] = exclusion_counts
+    return result
 
 
 @dataclass
@@ -192,26 +253,30 @@ def predict_risk(
     horizon_hours: int = 6,
     model: FittedRiskModel | None = None,
     flood_stage_ft: float = DEFAULT_FLOOD_STAGE_FT,
+    sample_interval_minutes: int = 15,
 ) -> dict[str, Any]:
     """Predict crossing risk using only rows at or before ``as_of``.
 
     If the caller supplies no fitted and evaluated model, returns a null
     probability with an explicit persistence fallback; it never invents one.
     """
-    cutoff = pd.to_datetime(as_of, utc=True, errors="raise")
-    history = _clean_observations(observations)
-    history = history.loc[history.timestamp <= cutoff].reset_index(drop=True)
+    validation = validate_model_input(
+        observations, as_of=as_of, sample_interval_minutes=sample_interval_minutes
+    )
+    cutoff = validation.as_of
+    history = validation.observations
     result: dict[str, Any] = {
         "crossing_probability": None,
         "horizon_hours": horizon_hours,
         "model_name": MODEL_NAME if model else "persistence_fallback",
         "model_version": MODEL_VERSION if model else None,
         "fallback": None,
+        "data_quality": validation.data_quality,
     }
     if horizon_hours <= 0:
         raise ValueError("horizon_hours must be positive")
-    if history.empty:
-        result["fallback"] = "no_observations_at_or_before_as_of"
+    if not validation.usable:
+        result["fallback"] = validation.fallback
         return result
     current = float(history.stage_ft.iloc[-1])
     result["current_stage_ft"] = current
@@ -221,7 +286,7 @@ def predict_risk(
         return result
     features = _features_at(history, cutoff, flood_stage_ft)
     if features is None:
-        result["fallback"] = "insufficient_recent_history_for_features"
+        result["fallback"] = "insufficient_history"
         return result
     if model is None:
         result["fallback"] = "validated_model_not_loaded"

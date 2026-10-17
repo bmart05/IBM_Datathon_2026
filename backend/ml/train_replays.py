@@ -28,6 +28,7 @@ def load_replay_examples(
     checksums: dict[str, str] = {}
     replay_files: dict[str, str] = {}
     observation_count = 0
+    excluded_windows: dict[str, int] = {}
     for path in sorted(replay_dir.glob("*.json")):
         raw = path.read_bytes()
         fixture = json.loads(raw)
@@ -44,7 +45,9 @@ def load_replay_examples(
         cadence = max(1, int(round(float(np.median(positive_intervals)))))
         series = pd.DataFrame({
             "timestamp": times,
-            "stage_ft": [row["stage_ft"] for row in observations],
+            "stage_ft": [row.get("stage_ft") for row in observations],
+            "approval_status": [row.get("approval_status") for row in observations],
+            "qualifier": [row.get("qualifier") for row in observations],
         })
         examples = build_examples(
             series,
@@ -56,6 +59,8 @@ def load_replay_examples(
         examples["replay_id"] = replay_id
         examples["station_id"] = station["usgs_id"]
         examples["dataset_role"] = fixture.get("dataset_role", "flood_event")
+        for reason, count in examples.attrs.get("excluded_windows", {}).items():
+            excluded_windows[reason] = excluded_windows.get(reason, 0) + int(count)
         frames.append(examples)
         source_files.append(path.name)
         checksums[path.name] = hashlib.sha256(raw).hexdigest()
@@ -67,6 +72,7 @@ def load_replay_examples(
     examples = pd.concat(frames, ignore_index=True)
     if examples.label.nunique() < 2:
         raise RuntimeError("Repository replay set did not produce both classes")
+    examples.attrs["excluded_windows"] = excluded_windows
     return examples, source_files, checksums, replay_files, observation_count
 
 
@@ -127,6 +133,7 @@ def main() -> None:
         "source_checksums_sha256": checksums,
         "source_observations": observations,
         "labelled_examples": len(examples),
+        "excluded_windows_by_reason": examples.attrs.get("excluded_windows", {}),
         "label_counts": {str(key): int(value) for key, value in examples.label.value_counts().sort_index().items()},
         "stations": sorted(examples.station_id.unique().tolist()),
         "thresholds_ft": sorted(float(value) for value in examples.threshold_ft.unique()),
