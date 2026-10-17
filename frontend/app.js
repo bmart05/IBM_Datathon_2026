@@ -197,8 +197,22 @@ function renderEvaluation() {
   byId("evaluation-note").textContent = `${evaluation.forecast_origins_evaluated.toLocaleString()} forecast origins scored · ${evaluation.forecast_origins_excluded_for_gaps_or_warmup.toLocaleString()} excluded for data gaps or warm-up. Overlapping windows are correlated; results describe this event only.`;
 }
 
-function chartPath(points, x, y) {
-  return points.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(2)},${y(point.stage_m).toFixed(2)}`).join(" ");
+function observationGaps(points) {
+  const timestamps = points.map((point) => new Date(point.time).getTime());
+  const intervals = timestamps.slice(1).map((time, index) => time - timestamps[index]);
+  const cadence = intervals.filter((interval) => Number.isFinite(interval) && interval > 0).sort((a, b) => a - b);
+  if (!cadence.length) return [];
+  const middle = Math.floor(cadence.length / 2);
+  const medianCadence = cadence.length % 2 ? cadence[middle] : (cadence[middle - 1] + cadence[middle]) / 2;
+  return intervals.flatMap((interval, index) =>
+    Number.isFinite(interval) && interval > medianCadence * 1.5
+      ? [{ afterIndex: index + 1, durationMs: interval }]
+      : []
+  );
+}
+
+function chartPath(points, startIndex, x, y) {
+  return points.map((point, offset) => `${offset ? "L" : "M"}${x(startIndex + offset).toFixed(2)},${y(point.stage_m).toFixed(2)}`).join(" ");
 }
 
 function renderChart(index) {
@@ -207,16 +221,47 @@ function renderChart(index) {
   const ns = "http://www.w3.org/2000/svg";
   const points = replay.observations;
   const width = 1000, height = 320, left = 54, right = 16, top = 14, bottom = 31;
+  const plotWidth = width - left - right;
+  const times = points.map((point) => new Date(point.time).getTime());
+  const validTimes = times.every(Number.isFinite);
+  const firstTime = validTimes ? times[0] : 0;
+  const timeSpan = validTimes ? Math.max(1, times.at(-1) - firstTime) : Math.max(1, points.length - 1);
+  const gaps = observationGaps(points);
+  const gapIndexes = new Set(gaps.map((gap) => gap.afterIndex));
+  const segments = [];
+  let segmentStart = 0;
+  for (let pointIndex = 1; pointIndex < points.length; pointIndex++) {
+    if (gapIndexes.has(pointIndex)) {
+      segments.push({ start: segmentStart, end: pointIndex - 1 });
+      segmentStart = pointIndex;
+    }
+  }
+  segments.push({ start: segmentStart, end: points.length - 1 });
   const values = points.map((point) => point.stage_m);
   const threshold = replay.target.threshold_m;
   const low = Math.min(...values, threshold) * 0.9;
   const high = Math.max(...values, threshold) * 1.08;
-  const x = (i) => left + (points.length < 2 ? 0 : i / (points.length - 1)) * (width - left - right);
+  const x = (i) => left + (validTimes ? (times[i] - firstTime) / timeSpan : (points.length < 2 ? 0 : i / (points.length - 1))) * plotWidth;
   const y = (value) => top + (1 - (value - low) / (high - low || 1)) * (height - top - bottom);
   svg.replaceChildren();
   const defs = document.createElementNS(ns, "defs");
-  defs.innerHTML = '<linearGradient id="stage-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#65b8ff" stop-opacity=".18"/><stop offset="100%" stop-color="#65b8ff" stop-opacity="0"/></linearGradient>';
+  defs.innerHTML = '<linearGradient id="stage-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#65b8ff" stop-opacity=".18"/><stop offset="100%" stop-color="#65b8ff" stop-opacity="0"/></linearGradient><pattern id="gap-fill" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#ffbd6212"/><line x1="0" y1="0" x2="0" y2="6" stroke="#ffbd62" stroke-opacity=".48" stroke-width="2"/></pattern>';
   svg.append(defs);
+  for (const gap of gaps) {
+    const beforeX = x(gap.afterIndex - 1), afterX = x(gap.afterIndex);
+    const bandWidth = Math.max(8, afterX - beforeX);
+    const center = (beforeX + afterX) / 2;
+    const band = document.createElementNS(ns, "rect");
+    band.setAttribute("x", Math.max(left, center - bandWidth / 2));
+    band.setAttribute("y", top);
+    band.setAttribute("width", Math.max(0, Math.min(width - right, center + bandWidth / 2) - Math.max(left, center - bandWidth / 2)));
+    band.setAttribute("height", height - top - bottom);
+    band.setAttribute("class", "chart-gap-band");
+    const title = document.createElementNS(ns, "title");
+    title.textContent = `Data gap: ${(gap.durationMs / 60000).toFixed(0)} minutes between observations`;
+    band.append(title);
+    svg.append(band);
+  }
   for (let tick = 0; tick <= 4; tick++) {
     const yy = top + tick * (height - top - bottom) / 4;
     const value = high - tick * (high - low) / 4;
@@ -225,16 +270,23 @@ function renderChart(index) {
     const label = document.createElementNS(ns, "text");
     label.setAttribute("x", left - 9); label.setAttribute("y", yy + 3); label.setAttribute("text-anchor", "end"); label.setAttribute("class", "chart-axis"); label.textContent = value.toFixed(1); svg.append(label);
   }
-  const area = document.createElementNS(ns, "path");
-  const observedPath = chartPath(points, x, y);
-  area.setAttribute("d", `${observedPath} L${x(points.length - 1)},${height - bottom} L${x(0)},${height - bottom} Z`); area.setAttribute("class", "chart-area"); svg.append(area);
-  const line = document.createElementNS(ns, "path"); line.setAttribute("d", observedPath); line.setAttribute("class", "chart-line"); svg.append(line);
+  for (const segment of segments) {
+    const segmentPoints = points.slice(segment.start, segment.end + 1);
+    const segmentPath = chartPath(segmentPoints, segment.start, x, y);
+    if (segmentPoints.length > 1) {
+      const area = document.createElementNS(ns, "path");
+      area.setAttribute("d", `${segmentPath} L${x(segment.end)},${height - bottom} L${x(segment.start)},${height - bottom} Z`);
+      area.setAttribute("class", "chart-area"); svg.append(area);
+    }
+    const line = document.createElementNS(ns, "path"); line.setAttribute("d", segmentPath); line.setAttribute("class", "chart-line"); svg.append(line);
+  }
   const thresholdLine = document.createElementNS(ns, "line"); thresholdLine.setAttribute("x1", left); thresholdLine.setAttribute("x2", width - right); thresholdLine.setAttribute("y1", y(threshold)); thresholdLine.setAttribute("y2", y(threshold)); thresholdLine.setAttribute("class", "threshold-line"); svg.append(thresholdLine);
   const thresholdLabel = document.createElementNS(ns, "text"); thresholdLabel.setAttribute("x", width - right); thresholdLabel.setAttribute("y", y(threshold) - 6); thresholdLabel.setAttribute("text-anchor", "end"); thresholdLabel.setAttribute("class", "chart-axis"); thresholdLabel.setAttribute("fill", "#ffbd62"); thresholdLabel.textContent = `MINOR ${threshold.toFixed(2)} m`; svg.append(thresholdLabel);
   const cursor = document.createElementNS(ns, "line"); cursor.setAttribute("x1", x(index)); cursor.setAttribute("x2", x(index)); cursor.setAttribute("y1", top); cursor.setAttribute("y2", height - bottom); cursor.setAttribute("class", "cursor-line"); svg.append(cursor);
   const dot = document.createElementNS(ns, "circle"); dot.setAttribute("cx", x(index)); dot.setAttribute("cy", y(points[index].stage_m)); dot.setAttribute("r", "5"); dot.setAttribute("class", "cursor-dot"); svg.append(dot);
   const startLabel = document.createElementNS(ns, "text"); startLabel.setAttribute("x", left); startLabel.setAttribute("y", height - 8); startLabel.setAttribute("class", "chart-axis"); startLabel.textContent = fmtDate(points[0].time, { month: "short", day: "numeric", timeZone: "UTC" }); svg.append(startLabel);
   const endLabel = document.createElementNS(ns, "text"); endLabel.setAttribute("x", width - right); endLabel.setAttribute("y", height - 8); endLabel.setAttribute("text-anchor", "end"); endLabel.setAttribute("class", "chart-axis"); endLabel.textContent = fmtDate(points.at(-1).time, { month: "short", day: "numeric", timeZone: "UTC" }); svg.append(endLabel);
+  svg.setAttribute("aria-label", `River stage over time; ${gaps.length} data gaps highlighted`);
 }
 
 function trendEstimate(index) {
