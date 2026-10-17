@@ -90,6 +90,10 @@ class CrossingDecisionScenarios(unittest.TestCase):
         result = decide_crossing(crossing_probability=None, current_stage_ft=19.0, fallback="already_above_threshold_ongoing_flood")
         self.assertIs(result.state, DecisionState.threshold_exceeded)
         self.assertIn("Observed", result.explanation)
+        # A gappy feature history prevents model scoring, but does not erase a
+        # separate, fresh and source-valid measurement of an observed crossing.
+        gappy = decide_crossing(crossing_probability=None, current_stage_ft=19.0, fallback="gappy_history")
+        self.assertIs(gappy.state, DecisionState.threshold_exceeded)
         self.assertIs(decide_crossing(crossing_probability=None, current_stage_ft=19.0, data_quality_valid=False).state, DecisionState.data_unavailable)
 
     def test_null_below_threshold_score_preserves_named_fallback(self):

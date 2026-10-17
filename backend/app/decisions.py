@@ -137,7 +137,10 @@ def decide_crossing_alert(
     The classifier does not predict a peak stage. Its score is kept separate
     from ``decide_alert``'s trend-baseline exceedance probability. Observation
     freshness is bounded by 1.5 times the declared source cadence, and ``as_of``
-    is injectable for deterministic historical replay.
+    is injectable for deterministic historical replay. ``data_quality_valid``
+    describes the latest measured stage and its source quality, not whether the
+    full model feature window is complete; a model-window failure belongs in
+    ``fallback``.
     """
     policy = AlertPolicy(policy)
     policy_threshold = POLICY_THRESHOLDS[policy]
