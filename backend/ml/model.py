@@ -13,22 +13,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-import sys
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-# Make the shared repository-level riverguard package available when the
-# standalone replay script is launched from backend/ml as documented.
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-try:
-    from .validation import source_quality_fallback, validate_model_input
-except ImportError:  # Support `python train_replays.py` from this directory.
-    from validation import source_quality_fallback, validate_model_input
+from .validation import source_quality_fallback, validate_model_input
 
 MODEL_NAME = "hist_gradient_boosting"
 MODEL_VERSION = "v2"
@@ -425,6 +415,7 @@ def save_artifact(
     metadata = {
         "model_name": model.model_name,
         "model_version": model.model_version,
+        "artifact_class": f"{model.__class__.__module__}.{model.__class__.__qualname__}",
         "flood_stage_ft": model.flood_stage_ft,
         "horizon_hours": model.horizon_hours,
         "training_data_id": training_data_id,

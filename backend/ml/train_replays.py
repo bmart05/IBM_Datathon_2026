@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from model import build_examples, evaluate_temporally, save_artifact, train_model
+from .model import build_examples, evaluate_temporally, save_artifact, train_model
 
 ROOT = Path(__file__).resolve().parents[1]
 REPLAY_DIR = ROOT / "data" / "replays"

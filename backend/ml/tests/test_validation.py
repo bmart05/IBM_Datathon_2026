@@ -1,4 +1,8 @@
 import tempfile
+import json
+import os
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -7,7 +11,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from sklearn.dummy import DummyClassifier
 
-from backend.ml.model import (
+from ml.model import (
     FEATURE_COLUMNS,
     FittedRiskModel,
     build_examples,
@@ -15,7 +19,7 @@ from backend.ml.model import (
     predict_risk,
     save_artifact,
 )
-from backend.ml.validation import validate_model_input
+from ml.validation import validate_model_input
 
 
 AS_OF = pd.Timestamp("2026-01-01T12:00:00Z")
@@ -103,6 +107,56 @@ class ValidationTests(unittest.TestCase):
         observations = observations.drop(index=30)
         examples = build_examples(observations, cadence_minutes=15)
         self.assertGreater(examples.attrs.get("excluded_windows", {}).get("gappy_history", 0), 0)
+
+    def test_artifact_loads_and_predicts_in_fresh_serving_process(self):
+        repo_root = Path(__file__).resolve().parents[3]
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.pathsep.join((str(repo_root / "backend"), str(repo_root)))
+        with tempfile.TemporaryDirectory() as directory:
+            save_script = r'''
+import numpy as np
+import pandas as pd
+from sklearn.dummy import DummyClassifier
+from ml.model import FEATURE_COLUMNS, FittedRiskModel, save_artifact
+features = pd.DataFrame([[0.0] * len(FEATURE_COLUMNS), [1.0] * len(FEATURE_COLUMNS)], columns=FEATURE_COLUMNS)
+estimator = DummyClassifier(strategy="prior").fit(features, [0, 1])
+save_artifact(FittedRiskModel(estimator), {}, r"''' + directory + r'''", training_data_id="test", train_end="2025-01-01T00:00:00Z")
+'''
+            subprocess.run(
+                [sys.executable, "-c", save_script],
+                cwd=repo_root,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            artifact_metadata = json.loads((Path(directory) / "model_metadata.json").read_text())
+            self.assertEqual(artifact_metadata["artifact_class"], "ml.model.FittedRiskModel")
+            predict_script = r'''
+import json
+import numpy as np
+import pandas as pd
+from ml.model import load_artifact, predict_risk
+as_of = pd.Timestamp("2026-01-01T12:00:00Z")
+times = pd.date_range(end=as_of, periods=26, freq="15min")
+observations = pd.DataFrame({"timestamp": times, "stage_ft": 3.0, "approval_status": "Approved", "qualifier": None})
+model = load_artifact(r"''' + directory + r'''")
+result = predict_risk(observations, as_of.isoformat(), model=model, sample_interval_minutes=15)
+assert result["fallback"] is None
+assert np.isfinite(result["crossing_probability"])
+print(json.dumps(result))
+'''
+            serving_env = env.copy()
+            serving_env["PYTHONPATH"] = os.pathsep.join((str(repo_root / "backend"), str(repo_root)))
+            result = subprocess.run(
+                [sys.executable, "-c", predict_script],
+                cwd=repo_root / "backend",
+                env=serving_env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        self.assertIsNone(json.loads(result.stdout)["fallback"])
 
 
 if __name__ == "__main__":
