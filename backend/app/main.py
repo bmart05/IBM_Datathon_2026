@@ -22,6 +22,8 @@ from .model_contracts import (
     EurekaModelResponse,
     model_unavailable_response,
 )
+from .replay_contracts import ReplayPredictionRequest, ReplayPredictionResponse
+from .replay_service import predict_replay
 
 app = FastAPI(
     title="RiverGuard API",
@@ -307,6 +309,12 @@ def list_replays():
 def replay(replay_id: str):
     """Return a complete historic observation series for deterministic playback."""
     return load_replay(replay_id)
+
+
+@app.post("/v1/replays/{replay_id}/predict", response_model=ReplayPredictionResponse)
+def predict_replay_policy(replay_id: str, request: ReplayPredictionRequest):
+    """Evaluate the trend baseline at a historical clock using fixture rows only."""
+    return predict_replay(load_replay(replay_id), request)
 
 
 def precision_recall_auc(rows: list[dict], method: str) -> float | None:
