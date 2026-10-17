@@ -1,13 +1,13 @@
 # Agent 3 (Joe) — Backend and IBM deployment
 
 Status: WORKING
-Updated (UTC): 2026-10-17T14:53:50Z
+Updated (UTC): 2026-10-17T14:55:35Z
 Code branch: backend (local development checkout fast-forwarded to ecad8fb)
 Code commit / PR: ecad8fb Merge pull request #5 from bmart05/codex/communication; no open backend PR from Agent 3.
 Working on: integrate the shared loader, an explicitly Eureka-scoped model endpoint, and the decision policy without breaking the existing dashboard contract.
-Verified: `git fetch origin` and fast-forward from 0e67d49 to origin/backend ecad8fb succeeded. The checked-out branch now contains the merged ML and frontend code plus the shared loader. No backend integration tests, new image build, or live route check has been run on ecad8fb. Prior LinuxONE build evidence remains specific to 0e67d49.
-Blockers: model/decision serving requires explicit A1/A2/A4/A5 contract agreement; LinuxONE s390x dependency compatibility and model artifact generation remain unverified.
-Next handoff: A1 confirm loader boundary; A2 accept/refine model endpoint and package/artifact plan; A4 confirm current route compatibility and dashboard adoption; A5 accept/refine decision semantics.
+Verified: `git fetch origin` and fast-forward from 0e67d49 to origin/backend ecad8fb succeeded. The checked-out branch now contains the merged ML and frontend code plus the shared loader. Read-only SSH confirms the LinuxONE host is s390x and `riverguard-api` is currently Up on port 8000; its image creation time is 2026-10-17 09:17:40 CDT, but its source commit is not known. No backend integration tests, new image build, or route check has been run on ecad8fb. Prior verified build evidence remains specific to 0e67d49.
+Blockers: A1's final integration decision and explicit A2/A4/A5 contract agreement; LinuxONE s390x dependency compatibility and model artifact generation remain unverified. The current server container is shared and will not be replaced until A1 directs the deployment path.
+Next handoff: A1 confirm the integration/merge/deployment plan as project lead; A2 accept/refine model endpoint and package/artifact plan; A4 confirm dashboard compatibility/adoption; A5 accept/refine decision semantics.
 
 ## Acknowledgements
 
@@ -16,6 +16,7 @@ Next handoff: A1 confirm loader boundary; A2 accept/refine model endpoint and pa
 - A2-0001 -> A3-0002 (answered with a proposed model endpoint and runtime plan; explicit contract acceptance is pending).
 - A2-0002 -> A3-0003 (accepted; confirmed that the ML score is a new-crossing estimate, not a drop-in replacement for the existing peak-stage API; this does not accept A3-0002's proposed fields).
 - A1-0006 -> A3-0003 (received; summary: lemon).
+- User instruction -> A3-0004 (acknowledged; Agent 1 is the project lead and final decision-maker for cross-agent integration, contracts, and merge direction).
 
 ## Messages
 
@@ -61,3 +62,14 @@ References: A1-0006; A2-0002
 Summary: lemon
 Evidence: Read A1-0006 and A2-0002 in the canonical communication branch. The model output contract and its limits are recorded in A2-0002; A3-0002 remains a proposal pending explicit acceptance from the affected owners.
 Action needed: none.
+
+## A3-0004
+Time (UTC): 2026-10-17T14:55:35Z
+To: A1
+Kind: HANDOFF
+Priority: NORMAL
+State: OPEN
+References: A1-0001; A3-0001; A3-0002
+Summary: The user has designated Agent 1 as the project lead and final decision-maker for cross-agent integration, shared API contracts, merge direction, and deployment sequencing. I will defer those decisions to A1 unless the user directs otherwise.
+Evidence: User instruction in the current task. Read-only SSH also confirms LinuxONE is s390x and `riverguard-api` is currently Up on port 8000; the running image was created at 2026-10-17 09:17:40 CDT, but no source commit was verified.
+Action needed: A1, please record the leadership role in your own status/protocol and publish the chosen integration/merge/deployment plan, including whether the existing running container is the shared demo service. I will not replace it until your deployment direction is clear.
