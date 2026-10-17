@@ -1,0 +1,2034 @@
+{
+  "replay_id": "guadalupe-jul-2025",
+  "name": "Guadalupe River flash flood at Kerrville \u2014 July 2025",
+  "dataset_role": "flood_event",
+  "station": {
+    "name": "Guadalupe River at Kerrville, Texas",
+    "noaa_id": "KRRT2",
+    "usgs_id": "USGS-08166200"
+  },
+  "target": {
+    "description": "Will stage reach minor flood stage within the next six hours?",
+    "horizon_hours": 6,
+    "flood_category": "minor",
+    "threshold_ft": 9.0,
+    "threshold_m": 2.743
+  },
+  "period": {
+    "start": "2025-07-03",
+    "end": "2025-07-06"
+  },
+  "source": {
+    "name": "USGS Water Data API \u2014 continuous gage height",
+    "url": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/continuous/items?monitoring_location_id=USGS-08166200&parameter_code=00065&datetime=2025-07-03%2F2025-07-06&f=json&limit=10000",
+    "retrieved_at": "2026-10-17T14:16:33.213506+00:00",
+    "license": "U.S. government data; public domain"
+  },
+  "threshold_source": {
+    "name": "NOAA National Water Prediction Service gauge flood categories",
+    "url": "https://water.noaa.gov/gauges/krrt2"
+  },
+  "data_quality": {
+    "observation_count": 285,
+    "highest_sample_ft": 37.51,
+    "highest_sample_time": "2025-07-04T11:45:00+00:00",
+    "note": "Approved USGS stage samples include a 37.51 ft crest at 2025-07-04T11:45:00Z. The six-hour crossing target uses NOAA's published 9 ft minor-flood threshold."
+  },
+  "observations": [
+    {
+      "time": "2025-07-03T00:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T00:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T00:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T00:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T01:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T01:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T01:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T01:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T02:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T02:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T02:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T02:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T03:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T03:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T03:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T03:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T04:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T04:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T04:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T04:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T05:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T05:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T05:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T05:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T06:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T06:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T06:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T06:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T07:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T07:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T07:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T07:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T08:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T08:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T08:30:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T08:45:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T09:00:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T09:15:00+00:00",
+      "stage_ft": 0.18,
+      "stage_m": 0.055,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T09:30:00+00:00",
+      "stage_ft": 0.26,
+      "stage_m": 0.079,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T09:45:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T10:00:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T10:15:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T10:30:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T10:45:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T11:00:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T11:15:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T11:30:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T11:45:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T12:00:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T12:15:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T12:30:00+00:00",
+      "stage_ft": 0.25,
+      "stage_m": 0.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T12:45:00+00:00",
+      "stage_ft": 0.26,
+      "stage_m": 0.079,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T13:00:00+00:00",
+      "stage_ft": 0.25,
+      "stage_m": 0.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T13:15:00+00:00",
+      "stage_ft": 0.25,
+      "stage_m": 0.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T13:30:00+00:00",
+      "stage_ft": 0.24,
+      "stage_m": 0.073,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T13:45:00+00:00",
+      "stage_ft": 0.24,
+      "stage_m": 0.073,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T14:00:00+00:00",
+      "stage_ft": 0.25,
+      "stage_m": 0.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T14:15:00+00:00",
+      "stage_ft": 0.25,
+      "stage_m": 0.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T14:30:00+00:00",
+      "stage_ft": 0.24,
+      "stage_m": 0.073,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T14:45:00+00:00",
+      "stage_ft": 0.24,
+      "stage_m": 0.073,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T15:00:00+00:00",
+      "stage_ft": 0.27,
+      "stage_m": 0.082,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T15:15:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T15:30:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T15:45:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T16:00:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T16:15:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T16:30:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T16:45:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T17:00:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T17:15:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T17:30:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T17:45:00+00:00",
+      "stage_ft": 0.28,
+      "stage_m": 0.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T18:00:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T18:15:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T18:30:00+00:00",
+      "stage_ft": 0.29,
+      "stage_m": 0.088,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T18:45:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T19:00:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T19:15:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T19:30:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T19:45:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T20:00:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T20:15:00+00:00",
+      "stage_ft": 0.32,
+      "stage_m": 0.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T20:30:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T20:45:00+00:00",
+      "stage_ft": 0.3,
+      "stage_m": 0.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T21:00:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T21:15:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T21:30:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T21:45:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T22:00:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T22:15:00+00:00",
+      "stage_ft": 0.32,
+      "stage_m": 0.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T22:30:00+00:00",
+      "stage_ft": 0.32,
+      "stage_m": 0.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T22:45:00+00:00",
+      "stage_ft": 0.31,
+      "stage_m": 0.094,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T23:00:00+00:00",
+      "stage_ft": 0.32,
+      "stage_m": 0.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T23:15:00+00:00",
+      "stage_ft": 0.32,
+      "stage_m": 0.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T23:30:00+00:00",
+      "stage_ft": 0.34,
+      "stage_m": 0.104,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-03T23:45:00+00:00",
+      "stage_ft": 0.33,
+      "stage_m": 0.101,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T00:00:00+00:00",
+      "stage_ft": 0.33,
+      "stage_m": 0.101,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T00:15:00+00:00",
+      "stage_ft": 0.33,
+      "stage_m": 0.101,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T00:30:00+00:00",
+      "stage_ft": 0.34,
+      "stage_m": 0.104,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T00:45:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T01:00:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T01:15:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T01:30:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T01:45:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T02:00:00+00:00",
+      "stage_ft": 0.35,
+      "stage_m": 0.107,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T02:15:00+00:00",
+      "stage_ft": 0.36,
+      "stage_m": 0.11,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T02:30:00+00:00",
+      "stage_ft": 0.36,
+      "stage_m": 0.11,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T02:45:00+00:00",
+      "stage_ft": 0.36,
+      "stage_m": 0.11,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T03:00:00+00:00",
+      "stage_ft": 0.36,
+      "stage_m": 0.11,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T03:15:00+00:00",
+      "stage_ft": 0.36,
+      "stage_m": 0.11,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T03:30:00+00:00",
+      "stage_ft": 0.37,
+      "stage_m": 0.113,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T03:45:00+00:00",
+      "stage_ft": 0.37,
+      "stage_m": 0.113,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T04:00:00+00:00",
+      "stage_ft": 0.37,
+      "stage_m": 0.113,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T04:15:00+00:00",
+      "stage_ft": 0.38,
+      "stage_m": 0.116,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T04:30:00+00:00",
+      "stage_ft": 0.38,
+      "stage_m": 0.116,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T04:45:00+00:00",
+      "stage_ft": 0.39,
+      "stage_m": 0.119,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T05:00:00+00:00",
+      "stage_ft": 0.39,
+      "stage_m": 0.119,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T05:15:00+00:00",
+      "stage_ft": 0.4,
+      "stage_m": 0.122,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T05:30:00+00:00",
+      "stage_ft": 0.43,
+      "stage_m": 0.131,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T05:45:00+00:00",
+      "stage_ft": 0.53,
+      "stage_m": 0.162,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T06:00:00+00:00",
+      "stage_ft": 0.7,
+      "stage_m": 0.213,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T06:15:00+00:00",
+      "stage_ft": 0.79,
+      "stage_m": 0.241,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T06:30:00+00:00",
+      "stage_ft": 0.84,
+      "stage_m": 0.256,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T06:45:00+00:00",
+      "stage_ft": 0.89,
+      "stage_m": 0.271,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T07:00:00+00:00",
+      "stage_ft": 0.95,
+      "stage_m": 0.29,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T07:15:00+00:00",
+      "stage_ft": 1.04,
+      "stage_m": 0.317,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T07:30:00+00:00",
+      "stage_ft": 1.15,
+      "stage_m": 0.351,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T07:45:00+00:00",
+      "stage_ft": 1.28,
+      "stage_m": 0.39,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T08:00:00+00:00",
+      "stage_ft": 1.47,
+      "stage_m": 0.448,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T08:15:00+00:00",
+      "stage_ft": 1.64,
+      "stage_m": 0.5,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T08:30:00+00:00",
+      "stage_ft": 1.71,
+      "stage_m": 0.521,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T08:45:00+00:00",
+      "stage_ft": 1.73,
+      "stage_m": 0.527,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T09:00:00+00:00",
+      "stage_ft": 1.74,
+      "stage_m": 0.53,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T09:15:00+00:00",
+      "stage_ft": 1.74,
+      "stage_m": 0.53,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T09:30:00+00:00",
+      "stage_ft": 1.75,
+      "stage_m": 0.533,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T09:45:00+00:00",
+      "stage_ft": 1.78,
+      "stage_m": 0.543,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T10:00:00+00:00",
+      "stage_ft": 1.82,
+      "stage_m": 0.555,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T10:15:00+00:00",
+      "stage_ft": 1.82,
+      "stage_m": 0.555,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T10:30:00+00:00",
+      "stage_ft": 5.16,
+      "stage_m": 1.573,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T10:45:00+00:00",
+      "stage_ft": 9.19,
+      "stage_m": 2.801,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T11:00:00+00:00",
+      "stage_ft": 14.65,
+      "stage_m": 4.465,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T11:15:00+00:00",
+      "stage_ft": 27.93,
+      "stage_m": 8.513,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T11:30:00+00:00",
+      "stage_ft": 35.04,
+      "stage_m": 10.68,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T11:45:00+00:00",
+      "stage_ft": 37.51,
+      "stage_m": 11.433,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T12:00:00+00:00",
+      "stage_ft": 37.23,
+      "stage_m": 11.348,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T12:15:00+00:00",
+      "stage_ft": 34.57,
+      "stage_m": 10.537,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T12:30:00+00:00",
+      "stage_ft": 29.85,
+      "stage_m": 9.098,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T12:45:00+00:00",
+      "stage_ft": 24.66,
+      "stage_m": 7.516,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T13:00:00+00:00",
+      "stage_ft": 19.82,
+      "stage_m": 6.041,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T13:15:00+00:00",
+      "stage_ft": 15.25,
+      "stage_m": 4.648,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T13:30:00+00:00",
+      "stage_ft": 13.89,
+      "stage_m": 4.234,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T13:45:00+00:00",
+      "stage_ft": 12.61,
+      "stage_m": 3.844,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T14:00:00+00:00",
+      "stage_ft": 11.98,
+      "stage_m": 3.652,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T14:15:00+00:00",
+      "stage_ft": 11.98,
+      "stage_m": 3.652,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T14:30:00+00:00",
+      "stage_ft": 12.24,
+      "stage_m": 3.731,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T14:45:00+00:00",
+      "stage_ft": 12.47,
+      "stage_m": 3.801,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T15:00:00+00:00",
+      "stage_ft": 12.49,
+      "stage_m": 3.807,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T15:15:00+00:00",
+      "stage_ft": 12.53,
+      "stage_m": 3.819,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T16:30:00+00:00",
+      "stage_ft": 10.07,
+      "stage_m": 3.069,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T16:45:00+00:00",
+      "stage_ft": 9.7,
+      "stage_m": 2.957,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T17:00:00+00:00",
+      "stage_ft": 9.63,
+      "stage_m": 2.935,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T17:15:00+00:00",
+      "stage_ft": 10.43,
+      "stage_m": 3.179,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T17:30:00+00:00",
+      "stage_ft": 11.84,
+      "stage_m": 3.609,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T17:45:00+00:00",
+      "stage_ft": 13.22,
+      "stage_m": 4.029,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T18:00:00+00:00",
+      "stage_ft": 14.28,
+      "stage_m": 4.353,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T18:15:00+00:00",
+      "stage_ft": 14.56,
+      "stage_m": 4.438,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T18:30:00+00:00",
+      "stage_ft": 14.51,
+      "stage_m": 4.423,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T18:45:00+00:00",
+      "stage_ft": 14.2,
+      "stage_m": 4.328,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T19:00:00+00:00",
+      "stage_ft": 13.91,
+      "stage_m": 4.24,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T19:15:00+00:00",
+      "stage_ft": 13.57,
+      "stage_m": 4.136,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T19:30:00+00:00",
+      "stage_ft": 13.19,
+      "stage_m": 4.02,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T19:45:00+00:00",
+      "stage_ft": 12.86,
+      "stage_m": 3.92,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T20:00:00+00:00",
+      "stage_ft": 12.5,
+      "stage_m": 3.81,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T20:15:00+00:00",
+      "stage_ft": 12.17,
+      "stage_m": 3.709,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T20:30:00+00:00",
+      "stage_ft": 11.92,
+      "stage_m": 3.633,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T20:45:00+00:00",
+      "stage_ft": 11.68,
+      "stage_m": 3.56,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T21:00:00+00:00",
+      "stage_ft": 11.52,
+      "stage_m": 3.511,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T21:15:00+00:00",
+      "stage_ft": 11.41,
+      "stage_m": 3.478,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T21:30:00+00:00",
+      "stage_ft": 11.28,
+      "stage_m": 3.438,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T21:45:00+00:00",
+      "stage_ft": 11.09,
+      "stage_m": 3.38,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T22:00:00+00:00",
+      "stage_ft": 10.89,
+      "stage_m": 3.319,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T22:15:00+00:00",
+      "stage_ft": 10.63,
+      "stage_m": 3.24,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T22:30:00+00:00",
+      "stage_ft": 10.37,
+      "stage_m": 3.161,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T22:45:00+00:00",
+      "stage_ft": 10.07,
+      "stage_m": 3.069,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T23:00:00+00:00",
+      "stage_ft": 9.77,
+      "stage_m": 2.978,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T23:15:00+00:00",
+      "stage_ft": 9.42,
+      "stage_m": 2.871,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T23:30:00+00:00",
+      "stage_ft": 9.1,
+      "stage_m": 2.774,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-04T23:45:00+00:00",
+      "stage_ft": 8.76,
+      "stage_m": 2.67,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T00:00:00+00:00",
+      "stage_ft": 8.47,
+      "stage_m": 2.582,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T00:15:00+00:00",
+      "stage_ft": 8.18,
+      "stage_m": 2.493,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T00:30:00+00:00",
+      "stage_ft": 7.91,
+      "stage_m": 2.411,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T00:45:00+00:00",
+      "stage_ft": 7.66,
+      "stage_m": 2.335,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T01:00:00+00:00",
+      "stage_ft": 7.43,
+      "stage_m": 2.265,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T01:15:00+00:00",
+      "stage_ft": 7.25,
+      "stage_m": 2.21,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T01:30:00+00:00",
+      "stage_ft": 7.1,
+      "stage_m": 2.164,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T01:45:00+00:00",
+      "stage_ft": 6.94,
+      "stage_m": 2.115,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T02:00:00+00:00",
+      "stage_ft": 6.81,
+      "stage_m": 2.076,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T02:15:00+00:00",
+      "stage_ft": 6.69,
+      "stage_m": 2.039,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T02:30:00+00:00",
+      "stage_ft": 6.58,
+      "stage_m": 2.006,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T02:45:00+00:00",
+      "stage_ft": 6.46,
+      "stage_m": 1.969,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T03:00:00+00:00",
+      "stage_ft": 6.36,
+      "stage_m": 1.939,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T03:15:00+00:00",
+      "stage_ft": 6.26,
+      "stage_m": 1.908,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T03:30:00+00:00",
+      "stage_ft": 6.17,
+      "stage_m": 1.881,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T03:45:00+00:00",
+      "stage_ft": 6.09,
+      "stage_m": 1.856,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T04:00:00+00:00",
+      "stage_ft": 6.01,
+      "stage_m": 1.832,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T04:15:00+00:00",
+      "stage_ft": 5.92,
+      "stage_m": 1.804,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T04:30:00+00:00",
+      "stage_ft": 5.82,
+      "stage_m": 1.774,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T04:45:00+00:00",
+      "stage_ft": 5.73,
+      "stage_m": 1.747,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T05:00:00+00:00",
+      "stage_ft": 5.64,
+      "stage_m": 1.719,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T05:15:00+00:00",
+      "stage_ft": 5.52,
+      "stage_m": 1.682,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T05:30:00+00:00",
+      "stage_ft": 5.45,
+      "stage_m": 1.661,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T05:45:00+00:00",
+      "stage_ft": 5.36,
+      "stage_m": 1.634,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T06:00:00+00:00",
+      "stage_ft": 5.25,
+      "stage_m": 1.6,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T06:15:00+00:00",
+      "stage_ft": 5.19,
+      "stage_m": 1.582,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T06:30:00+00:00",
+      "stage_ft": 5.09,
+      "stage_m": 1.551,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T06:45:00+00:00",
+      "stage_ft": 5.01,
+      "stage_m": 1.527,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T07:00:00+00:00",
+      "stage_ft": 4.93,
+      "stage_m": 1.503,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T07:15:00+00:00",
+      "stage_ft": 4.86,
+      "stage_m": 1.481,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T07:30:00+00:00",
+      "stage_ft": 4.77,
+      "stage_m": 1.454,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T07:45:00+00:00",
+      "stage_ft": 4.72,
+      "stage_m": 1.439,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T08:00:00+00:00",
+      "stage_ft": 4.63,
+      "stage_m": 1.411,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T08:15:00+00:00",
+      "stage_ft": 4.56,
+      "stage_m": 1.39,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T08:30:00+00:00",
+      "stage_ft": 4.5,
+      "stage_m": 1.372,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T08:45:00+00:00",
+      "stage_ft": 4.43,
+      "stage_m": 1.35,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T09:00:00+00:00",
+      "stage_ft": 4.36,
+      "stage_m": 1.329,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T09:15:00+00:00",
+      "stage_ft": 4.31,
+      "stage_m": 1.314,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T09:30:00+00:00",
+      "stage_ft": 4.25,
+      "stage_m": 1.295,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T09:45:00+00:00",
+      "stage_ft": 4.22,
+      "stage_m": 1.286,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T10:00:00+00:00",
+      "stage_ft": 4.16,
+      "stage_m": 1.268,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T10:15:00+00:00",
+      "stage_ft": 4.12,
+      "stage_m": 1.256,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T10:30:00+00:00",
+      "stage_ft": 4.07,
+      "stage_m": 1.241,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T10:45:00+00:00",
+      "stage_ft": 4.02,
+      "stage_m": 1.225,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T11:00:00+00:00",
+      "stage_ft": 3.98,
+      "stage_m": 1.213,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T11:15:00+00:00",
+      "stage_ft": 3.95,
+      "stage_m": 1.204,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T11:30:00+00:00",
+      "stage_ft": 3.88,
+      "stage_m": 1.183,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T11:45:00+00:00",
+      "stage_ft": 3.83,
+      "stage_m": 1.167,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T12:00:00+00:00",
+      "stage_ft": 3.82,
+      "stage_m": 1.164,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T12:15:00+00:00",
+      "stage_ft": 3.78,
+      "stage_m": 1.152,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T12:30:00+00:00",
+      "stage_ft": 3.73,
+      "stage_m": 1.137,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T12:45:00+00:00",
+      "stage_ft": 3.7,
+      "stage_m": 1.128,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T13:00:00+00:00",
+      "stage_ft": 3.67,
+      "stage_m": 1.119,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T13:15:00+00:00",
+      "stage_ft": 3.65,
+      "stage_m": 1.113,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T13:30:00+00:00",
+      "stage_ft": 3.61,
+      "stage_m": 1.1,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T13:45:00+00:00",
+      "stage_ft": 3.58,
+      "stage_m": 1.091,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T14:00:00+00:00",
+      "stage_ft": 3.56,
+      "stage_m": 1.085,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T14:15:00+00:00",
+      "stage_ft": 3.52,
+      "stage_m": 1.073,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T14:30:00+00:00",
+      "stage_ft": 3.49,
+      "stage_m": 1.064,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T14:45:00+00:00",
+      "stage_ft": 3.48,
+      "stage_m": 1.061,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T15:00:00+00:00",
+      "stage_ft": 3.45,
+      "stage_m": 1.052,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T15:15:00+00:00",
+      "stage_ft": 3.43,
+      "stage_m": 1.045,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T15:30:00+00:00",
+      "stage_ft": 3.42,
+      "stage_m": 1.042,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T15:45:00+00:00",
+      "stage_ft": 3.38,
+      "stage_m": 1.03,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T16:00:00+00:00",
+      "stage_ft": 3.36,
+      "stage_m": 1.024,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T16:15:00+00:00",
+      "stage_ft": 3.36,
+      "stage_m": 1.024,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T16:30:00+00:00",
+      "stage_ft": 3.34,
+      "stage_m": 1.018,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T16:45:00+00:00",
+      "stage_ft": 3.31,
+      "stage_m": 1.009,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T17:00:00+00:00",
+      "stage_ft": 3.31,
+      "stage_m": 1.009,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T17:15:00+00:00",
+      "stage_ft": 3.29,
+      "stage_m": 1.003,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T17:30:00+00:00",
+      "stage_ft": 3.26,
+      "stage_m": 0.994,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T17:45:00+00:00",
+      "stage_ft": 3.24,
+      "stage_m": 0.988,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T18:00:00+00:00",
+      "stage_ft": 3.22,
+      "stage_m": 0.981,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T18:15:00+00:00",
+      "stage_ft": 3.21,
+      "stage_m": 0.978,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T18:30:00+00:00",
+      "stage_ft": 3.19,
+      "stage_m": 0.972,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T18:45:00+00:00",
+      "stage_ft": 3.18,
+      "stage_m": 0.969,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T19:00:00+00:00",
+      "stage_ft": 3.16,
+      "stage_m": 0.963,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T19:15:00+00:00",
+      "stage_ft": 3.15,
+      "stage_m": 0.96,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T19:30:00+00:00",
+      "stage_ft": 3.14,
+      "stage_m": 0.957,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T19:45:00+00:00",
+      "stage_ft": 3.12,
+      "stage_m": 0.951,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T20:00:00+00:00",
+      "stage_ft": 3.11,
+      "stage_m": 0.948,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T20:15:00+00:00",
+      "stage_ft": 3.1,
+      "stage_m": 0.945,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T20:30:00+00:00",
+      "stage_ft": 3.08,
+      "stage_m": 0.939,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T20:45:00+00:00",
+      "stage_ft": 3.07,
+      "stage_m": 0.936,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T21:00:00+00:00",
+      "stage_ft": 3.05,
+      "stage_m": 0.93,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T21:15:00+00:00",
+      "stage_ft": 3.04,
+      "stage_m": 0.927,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T21:30:00+00:00",
+      "stage_ft": 3.04,
+      "stage_m": 0.927,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T21:45:00+00:00",
+      "stage_ft": 3.03,
+      "stage_m": 0.924,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T22:00:00+00:00",
+      "stage_ft": 3.01,
+      "stage_m": 0.917,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T22:15:00+00:00",
+      "stage_ft": 3.0,
+      "stage_m": 0.914,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T22:30:00+00:00",
+      "stage_ft": 2.99,
+      "stage_m": 0.911,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T22:45:00+00:00",
+      "stage_ft": 2.97,
+      "stage_m": 0.905,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T23:00:00+00:00",
+      "stage_ft": 2.96,
+      "stage_m": 0.902,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T23:15:00+00:00",
+      "stage_ft": 2.96,
+      "stage_m": 0.902,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T23:30:00+00:00",
+      "stage_ft": 2.95,
+      "stage_m": 0.899,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-05T23:45:00+00:00",
+      "stage_ft": 2.94,
+      "stage_m": 0.896,
+      "approval_status": "Approved",
+      "qualifier": null
+    },
+    {
+      "time": "2025-07-06T00:00:00+00:00",
+      "stage_ft": 2.94,
+      "stage_m": 0.896,
+      "approval_status": "Approved",
+      "qualifier": null
+    }
+  ]
+}
