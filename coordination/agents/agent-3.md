@@ -1,14 +1,14 @@
 # Agent 3 (Joe; Vice President by user request) — Backend and IBM deployment
 
 Status: WORKING
-Updated (UTC): 2026-10-17T15:39:26Z
+Updated (UTC): 2026-10-17T15:44:15Z
 Communication name: Vice President (Agent 3 / Joe), per the user's direct instruction; this naming choice does not require Agent 1's approval. Project leadership and final decisions remain with Agent 1, the boss.
-Code branch: `agent-3/eureka-integration` from `origin/main` 77f9cb4
-Code commit / PR: 7c62d62; [focused branch](https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration); PR not opened yet.
-Working on: complete the additive Eureka model endpoint and deterministic replay-policy adapter, then package and verify an isolated LinuxONE candidate.
-Verified: Added strict `/v1/model/predict` request/response models and an explicit `validated_model_not_loaded` fallback; `/v1/predict` remains unchanged. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 6 passed on 7c62d62; `py_compile` passed for the changed API and test modules. The request rejects unsupported stations/thresholds, naive timestamps and non-finite stages; it canonicalizes Eureka IDs and counts only observations at/before `as_of`. The branch is pushed. No trained inference or LinuxONE candidate has been verified.
-Blockers: A2's latest tested shared validator/import path is still needed for the model route. A5 published the score-only helper signature at 3dbbc61; its code PR/merge is needed before the replay-policy adapter can import it. LinuxONE dependency compatibility and artifact generation remain unverified. The shared server on port 8000 remains untouched; candidate validation will use loopback port 8002.
-Next handoff: A2 provide the validator module/import and test SHA; A5 open/publish the helper PR; A4 validate the route contract when candidate is available.
+Code branch: `agent-3/eureka-integration`, based on `origin/main` 8e64a37 (merged in c61609d)
+Code commit / PR: e0df5a6; [focused branch](https://github.com/bmart05/IBM_Datathon_2026/tree/agent-3/eureka-integration); PR not opened yet.
+Working on: wire the reviewed ML validator/artifact into `/v1/model/predict`, then package and verify a separate LinuxONE candidate.
+Verified: Added `POST /v1/replays/{replay_id}/predict` with `{as_of, policy}`; it uses only bundled observations at/before `as_of`, returns timestamped trend fields plus decision metadata, and reports null forecast fields with named fallbacks for gappy/stale/source-invalid windows. At `2024-11-05T19:45:00Z`, it returns observed stage 5.779 m and a separate uncalibrated trend estimate; `2024-11-03T10:30:00Z` returns `gappy_history`. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 34 passed, 20 subtests passed on e0df5a6; `py_compile` and `git diff --check` passed. The branch is pushed. The model endpoint still returns the explicit not-loaded fallback; no fitted inference or candidate image has been verified.
+Blockers: A2's `d5646a2` artifact still has the module-identity issue in A1-0018; I will consume the fixed canonical training/serving package without sys.path aliases. A disposable LinuxONE source-build check for scientific dependencies is still running; the cached PyPI s390x wheels were unavailable. The shared port-8000 service remains untouched; candidate validation is isolated on loopback port 8002.
+Next handoff: A2 publish the fixed tested model package/import identity; A1 review the pushed backend branch; A4 consume the replay route contract and report browser integration.
 ## Acknowledgements
 
 - A1-0001 -> A3-0001 (accepted; read the protocol and will edit only this owned file).
@@ -27,6 +27,7 @@ Next handoff: A2 provide the validator module/import and test SHA; A5 open/publi
 - A1-0011 / A5-0003 -> A3-0012 (accepted; the score-only adapter signature and replay-time mapping are understood; A3 will integrate the helper without editing A5-owned files).
 - User request -> A3-0012 (accepted; asked the team to address Agent 3 as Vice President, while A1 remains the boss and final decision-maker).
 - User request -> A3-0014 (accepted; the user directly set Vice President (Agent 3 / Joe) as my communication name and said it does not need the boss's approval; this does not change A1's project leadership).
+- A1-0015 / A1-0018 / A1-0019 -> A3-0015 (accepted; integrate A5's merged helper and the A2 validator after the artifact identity fix, keep measured-current quality separate, use the verified replay points, and continue independent API/replay work without sys.path workarounds).
 ## Messages
 
 ## A3-0001
@@ -181,6 +182,17 @@ References: A1-0009; A5-0003; A3-0012
 Summary: Extended the focused API contract with UTC-normalized aware timestamps and regression coverage for explicit null/provisional readings while the validated model runtime is still pending.
 Evidence: Branch `agent-3/eureka-integration`, code SHA `7c62d62`. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 6 passed; `py_compile` passed for the changed API and test modules. An input `as_of` with offset `+01:00` is returned as UTC `Z`; naive observation timestamps are rejected; explicit null and Provisional/Ice inputs remain unscored with `data_quality.status=not_evaluated` and the honest `validated_model_not_loaded` fallback.
 Action needed: A2, please post the tested validator import path/SHA when ready; A5, please post the score-only helper PR/merge status. The Eureka model route and deterministic replay adapter still need both owner components before full quality/decision tests can pass.
+
+## A3-0015
+Time (UTC): 2026-10-17T15:44:15Z
+To: A1, A2, A4, A5
+Kind: HANDOFF
+Priority: NORMAL
+State: OPEN
+References: A1-0015; A1-0018; A1-0019; A1-0020; A5-0003; A5-0005
+Summary: Merged current `main` including A5's reviewed score-only helper, and pushed a server-backed deterministic trend replay route on `agent-3/eureka-integration`. A4 can now send `{as_of, policy}` to `POST /v1/replays/{replay_id}/predict`; response fields retain baseline `predicted_peak_m` / `probability_exceedance` and add `decision_state`, `policy_threshold`, `rationale`, `fallback`, and `data_quality`. It returns null forecast values and `data_unavailable` for gappy, stale, missing or unapproved windows, while preserving the measured stage and its separate source-quality indicator. Existing `/v1/predict` and replay routes remain intact.
+Evidence: Backend SHA e0df5a6; based on current main SHA 8e64a37 through merge c61609d. `PYTHONPATH=backend /tmp/riverguard-check-venv/bin/python -m pytest -q backend/tests` — 34 passed, 20 subtests passed. The Eureka 2024-11-05 19:45Z window returns a distinct uncalibrated trend estimate and review decision; the 2024-11-03 10:30Z window returns `gappy_history`; stale Nov 19 and exact 1.5× cadence boundaries are covered. `py_compile` and `git diff --check` pass. Branch push succeeded. The fitted model route is not yet integrated; A2 d5646a2 remains blocked on the fresh-process artifact identity defect, and no s390x inference/candidate build is claimed.
+Action needed: A1 review/record any compatibility corrections; A4 use the route/payload in the frontend-owned branch and report browser behavior. A2, please publish the canonical training/serving import fix, fresh-process save/load/predict test and new tested SHA when ready. A5, review whether the deterministic trend replay response preserves your current decision/rationale semantics. All recipients, please address me as Vice President (Agent 3 / Joe) in the hub per the user's direct naming instruction; no boss approval is required for that naming choice.
 
 ## A3-0014
 Time (UTC): 2026-10-17T15:39:26Z
