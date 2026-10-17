@@ -7,6 +7,8 @@ let evaluation = null;
 let playTimer = null;
 let playSpeed = 1;
 let currentIndex = 0;
+let policyTimer = null;
+let policyRequestVersion = 0;
 
 byId("api-url").value = apiBase;
 byId("docs-link").href = `${apiBase}/docs`;
@@ -23,6 +25,85 @@ async function api(path) {
     throw new Error(body.detail || `API returned ${response.status}`);
   }
   return response.json();
+}
+
+function clearPolicyCards(message, tone = "neutral") {
+  document.querySelectorAll(".policy-card").forEach((card) => {
+    const status = card.querySelector(".policy-status");
+    status.className = `policy-status ${tone}`;
+    status.textContent = message;
+    card.querySelector(".policy-score").textContent = "—";
+  });
+}
+
+function policyHistory(index) {
+  const available = replay.observations.slice(0, index + 1).slice(-24);
+  if (available.length < 2) return { error: "At least two past observations are needed to compare policies." };
+  const intervals = available.slice(1).map((row, i) =>
+    (new Date(row.time) - new Date(available[i].time)) / 60000
+  );
+  const sorted = [...intervals].sort((a, b) => a - b);
+  const medianInterval = sorted[Math.floor(sorted.length / 2)];
+  if (!Number.isFinite(medianInterval) || medianInterval <= 0 || intervals.some((gap) => gap <= 0 || gap > medianInterval * 1.5)) {
+    return { error: "A data gap in the recent history prevents a comparable policy estimate." };
+  }
+  return {
+    observed_at: available.at(-1).time,
+    recent_heights_m: available.map((row) => row.stage_m),
+    sample_interval_minutes: Math.max(1, Math.round(medianInterval)),
+  };
+}
+
+async function comparePolicies(index, version) {
+  const history = policyHistory(index);
+  if (history.error) {
+    clearPolicyCards("Unavailable");
+    byId("policy-rationale").textContent = history.error;
+    return;
+  }
+  const policies = ["cautious", "balanced", "early"];
+  try {
+    const results = await Promise.all(policies.map(async (policy) => {
+      const response = await fetch(`${apiBase}/v1/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          station_id: replay.station.noaa_id,
+          ...history,
+          flood_stage_m: replay.target.threshold_m,
+          policy,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.detail || `Prediction API returned ${response.status}`);
+      }
+      return [policy, await response.json()];
+    }));
+    if (version !== policyRequestVersion) return;
+    for (const [policy, result] of results) {
+      const card = document.querySelector(`.policy-card[data-policy="${policy}"]`);
+      const status = card.querySelector(".policy-status");
+      const reviewing = result.alert === "review_now";
+      status.className = `policy-status ${reviewing ? "review" : "monitor"}`;
+      status.textContent = reviewing ? "Human review" : "Monitor";
+      card.querySelector(".policy-score").textContent = Number(result.probability_exceedance).toFixed(2);
+    }
+    const baseline = results[0][1];
+    byId("policy-rationale").textContent = `${baseline.rationale} The score is a prototype heuristic, not a calibrated probability. Only observations available at this replay position were sent to the API.`;
+  } catch (error) {
+    if (version !== policyRequestVersion) return;
+    clearPolicyCards("Unavailable");
+    byId("policy-rationale").textContent = `Policy comparison unavailable: ${error.message}`;
+  }
+}
+
+function schedulePolicyComparison(index) {
+  if (policyTimer) clearTimeout(policyTimer);
+  const version = ++policyRequestVersion;
+  clearPolicyCards("Updating");
+  byId("policy-rationale").textContent = "Comparing the same replay position under all three backend policies…";
+  policyTimer = setTimeout(() => comparePolicies(index, version), 220);
 }
 
 function fmtDate(value, options = { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }) {
@@ -61,6 +142,8 @@ async function connect() {
     await loadReplay(select.value);
   } catch (error) {
     setStatus("error", "API unavailable");
+    clearPolicyCards("Unavailable");
+    byId("policy-rationale").textContent = `Policy comparison unavailable: ${error.message}`;
     byId("event-select").replaceChildren(htmlNode("option", {}, "Could not load events"));
     byId("event-name").textContent = "Can't reach the replay API";
     byId("event-location").textContent = error.message;
@@ -99,6 +182,8 @@ async function loadReplay(id) {
   } catch (error) {
     byId("event-name").textContent = "Could not load this event";
     byId("event-location").textContent = error.message;
+    clearPolicyCards("Unavailable");
+    byId("policy-rationale").textContent = `Policy comparison unavailable: ${error.message}`;
     setStatus("error", "Replay load failed");
   }
 }
@@ -199,6 +284,7 @@ function updatePosition(index) {
     byId("trend-note").textContent = "A low trend estimate does not rule out flooding; use official forecasts and qualified review.";
   }
   renderChart(currentIndex);
+  schedulePolicyComparison(currentIndex);
 }
 
 function stopPlayback() {
