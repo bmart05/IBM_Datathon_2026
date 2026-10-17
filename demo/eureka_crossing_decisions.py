@@ -102,18 +102,18 @@ def main() -> None:
             "next_observed_crossing_as_of": OBSERVED_CROSSING_AS_OF,
         },
         "reported_model_evaluation_separate_from_this_demo": {
-            "source": "backend/ml/README.md at the committed feature/ml evaluation report",
+            "source": "backend/ml/README.md at feature/ml commit d5646a2 (reported in A2-0008)",
             "scope": "Eureka 2024+ holdout",
             "method": "threshold-normalized HistGradientBoosting",
             "f1": 0.729,
             "average_precision": 0.777,
             "roc_auc": 0.998,
-            "brier_score": 0.0044,
+            "brier_score": 0.0045,
             "limitations": [
                 "Only two held-out Eureka flood events; adjacent origins overlap and are not independent.",
                 "These are replay-specific estimates, not calibrated operational forecasts.",
                 "This script does not run the model or claim that its simulated score came from the artifact.",
-                "Agent 2's quality-validator handoff may update the evaluation; verify its current report before presenting these metrics as final.",
+                "This demo reports the evaluation separately; it does not rerun the model training or evaluation.",
             ],
         },
         "policy_simulation_not_model_inference": {
