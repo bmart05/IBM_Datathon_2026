@@ -50,6 +50,17 @@
             <div class="prediction-box"><span class="control-label">ILLUSTRATIVE TREND PEAK</span><div><strong id="trend-peak">—</strong><span>m</span><span id="trend-badge" class="badge neutral">Awaiting data</span></div><p id="trend-note">Uses the observations from the previous hour. This is not a calibrated forecast.</p></div>
           </article>
 
+          <article class="panel policy-panel">
+            <div class="panel-heading compact"><div><div class="eyebrow small">DECISION SUPPORT</div><h3>Alert policy comparison</h3></div><span class="info-dot" title="Each policy changes the prototype alert threshold, not the published flood stage.">i</span></div>
+            <p class="muted policy-intro">Same replay position and trend score; each policy applies a different threshold. All decisions require human review.</p>
+            <div class="policy-grid" id="policy-grid" aria-live="polite">
+              <article class="policy-card" data-policy="cautious"><div class="policy-card-head"><strong>Cautious</strong><span class="policy-cutoff">≥ 0.75</span></div><span class="policy-status neutral">Waiting</span><strong class="policy-score">—</strong><span class="policy-score-label">uncalibrated score</span></article>
+              <article class="policy-card" data-policy="balanced"><div class="policy-card-head"><strong>Balanced</strong><span class="policy-cutoff">≥ 0.55</span></div><span class="policy-status neutral">Waiting</span><strong class="policy-score">—</strong><span class="policy-score-label">uncalibrated score</span></article>
+              <article class="policy-card" data-policy="early"><div class="policy-card-head"><strong>Early warning</strong><span class="policy-cutoff">≥ 0.35</span></div><span class="policy-status neutral">Waiting</span><strong class="policy-score">—</strong><span class="policy-score-label">uncalibrated score</span></article>
+            </div>
+            <p class="policy-rationale" id="policy-rationale">Move the replay timeline to compare how policy thresholds change the review decision.</p>
+          </article>
+
           <article class="panel score-panel">
             <div class="panel-heading compact"><div><div class="eyebrow small">EVENT-LEVEL REPLAY</div><h3>Baseline comparison</h3></div><span class="info-dot" title="Overlapping six-hour windows are correlated. Results describe this event only.">i</span></div>
             <div class="score-grid"><div class="score-cell"><span>Trend recall</span><strong id="trend-recall">—</strong></div><div class="score-cell"><span>Persistence recall</span><strong id="persistence-recall">—</strong></div><div class="score-cell"><span>Trend precision</span><strong id="trend-precision">—</strong></div><div class="score-cell"><span>Earliest trend lead</span><strong id="trend-lead">—</strong></div></div>
