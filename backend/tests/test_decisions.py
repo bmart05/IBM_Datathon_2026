@@ -29,6 +29,10 @@ class DecisionScenarios(unittest.TestCase):
                 self.assertIs(result.state, DecisionState.threshold_exceeded)
                 self.assertIn("observed river stage", result.explanation.lower())
 
+    def test_observed_crossing_takes_precedence_when_model_output_is_missing(self):
+        result = decide(latest_stage_m=5.1, probability_exceedance=None, forecast_peak_m=None)
+        self.assertIs(result.state, DecisionState.threshold_exceeded)
+
     def test_early_policy_escalates_forecast_risk_before_balanced(self):
         early = decide(policy=AlertPolicy.early, probability_exceedance=0.4, forecast_peak_m=5.1)
         balanced = decide(policy=AlertPolicy.balanced, probability_exceedance=0.4, forecast_peak_m=5.1)

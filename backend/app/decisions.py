@@ -55,20 +55,17 @@ def decide_alert(
     """
     policy = AlertPolicy(policy)
     policy_threshold = POLICY_THRESHOLDS[policy]
-    values = (probability_exceedance, latest_stage_m, forecast_peak_m, flood_stage_m)
-    if any(value is None or not isfinite(float(value)) for value in values):
+    if any(value is None or not isfinite(float(value)) for value in (latest_stage_m, flood_stage_m)):
         return AlertDecision(
             DecisionState.data_unavailable, policy, None,
-            "A current observation, flood-stage threshold, forecast, or risk score is unavailable; no confident alert is produced.",
+            "A current observation or published flood-stage threshold is unavailable; no confident alert is produced.",
         )
-    probability = float(probability_exceedance)
     latest = float(latest_stage_m)
-    peak = float(forecast_peak_m)
     stage = float(flood_stage_m)
-    if not 0 <= probability <= 1 or stage <= 0 or max_age.total_seconds() < 0:
+    if stage <= 0 or max_age.total_seconds() < 0:
         return AlertDecision(
             DecisionState.data_unavailable, policy, None,
-            "The supplied risk score or flood-stage metadata is invalid; verify the source data before using this result.",
+            "The supplied flood-stage metadata is invalid; verify the source data before using this result.",
         )
     if observed_at is None:
         return AlertDecision(
@@ -89,6 +86,18 @@ def decide_alert(
         return AlertDecision(
             DecisionState.threshold_exceeded, policy, policy_threshold,
             f"Observed river stage ({latest:.2f} m) has reached or exceeded the published flood stage ({stage:.2f} m). This is an observed threshold crossing, not a model alert.",
+        )
+    if any(value is None or not isfinite(float(value)) for value in (probability_exceedance, forecast_peak_m)):
+        return AlertDecision(
+            DecisionState.data_unavailable, policy, None,
+            "The model forecast or risk score is unavailable; the observed stage is below flood stage, so no confident forecast alert is produced.",
+        )
+    probability = float(probability_exceedance)
+    peak = float(forecast_peak_m)
+    if not 0 <= probability <= 1:
+        return AlertDecision(
+            DecisionState.data_unavailable, policy, None,
+            "The supplied risk score is invalid; verify the model output before using this result.",
         )
     if probability >= policy_threshold and peak >= stage:
         return AlertDecision(
