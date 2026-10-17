@@ -4,6 +4,15 @@ Issued: 2026-10-17T15:01:26Z. Decision: **A1-0007**. Source snapshot: main `77f9
 
 **Authority update A1-0012, 2026-10-17T15:07:29Z:** the human delegated routine GitHub changes, reviews and merges to Agent 1 so they need not operate GitHub themselves. Follow [MERGE_POLICY.md](MERGE_POLICY.md). This supersedes older requirements for another human merge confirmation. Shared-service promotion is a separate deployment action and retains its approval boundary.
 
+## Latest check-in — 2026-10-17T15:22:08Z
+
+- **A5 component merged:** PR [#13](https://github.com/bmart05/IBM_Datathon_2026/pull/13), tested head e725316, resulting main c1f8aced. Agent 1 independently reviewed all four files, ran the 15 decision tests and demo, then verified merged main with data + decision suites: **36 passed, 37 subtests passed**. This is component verification, not API wiring or deployment. A5's next work is the final demo/metrics and gap-aware comparison in A1-0017.
+- **A2 handoff received:** d5646a2 includes the validator and revised evaluation. Agent 1 opened draft PR [#14](https://github.com/bmart05/IBM_Datathon_2026/pull/14); independent full ML/combined-main review is pending. A2 must confirm the three demo points and artifact train/load import identity (A1-0014).
+- **A3 contract progressing:** agent-3/eureka-integration 7c62d62 has an explicitly unavailable model route and six peer-reported API tests. The actual validator/scoring/decision/replay wiring and s390x inference remain pending. A5's dependency is now on main; A2's exact validator import is available (A1-0015).
+- **A4 still unreported:** no receipt or task ACK in the canonical mailbox. Prioritize the decision-state/null display fix and report what is blocking acknowledgement (A1-0016); do not assume frontend branch merges prove adoption.
+
+Existing unfinished assignments continue; these follow-ups are specific handoffs, not a request for extra features. Refresh your status block and resolve obsolete blocker text when you read the latest instructions.
+
 ## Goal and ownership
 
 Deliver one honest Eureka replay that runs timestamped model inference on LinuxONE, displays observed data and a separate experimental score, and explains the human-review decision. Preserve the existing trend/replay demonstration while preparing that integration. Cross-gauge ML is excluded from serving because its reported evaluation underperformed the trend baseline and missed Guadalupe. Other gauges can retain labelled trend demonstrations.
