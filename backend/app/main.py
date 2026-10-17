@@ -17,6 +17,12 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
+from .model_contracts import (
+    EurekaModelRequest,
+    EurekaModelResponse,
+    model_unavailable_response,
+)
+
 app = FastAPI(
     title="RiverGuard API",
     description="Flood-stage risk estimates and human-reviewed alert decisions.",
@@ -254,6 +260,17 @@ def list_stations_in_bbox(west: float, south: float, east: float, north: float) 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "riverguard-api"}
+
+
+@app.post("/v1/model/predict", response_model=EurekaModelResponse)
+def predict_eureka_model(request: EurekaModelRequest):
+    """Experimental Eureka inference contract.
+
+    Keep the trained classifier opt-in and isolated from the legacy trend
+    endpoints. Until the validated runtime is installed, return an explicit
+    unavailable result instead of presenting a heuristic as model output.
+    """
+    return model_unavailable_response(request)
 
 
 def load_replay(replay_id: str) -> dict:
