@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 from math import isfinite
+from pathlib import Path
 import re
 from statistics import median
 from urllib.parse import urlencode
@@ -69,6 +70,7 @@ DEFAULT_STATION_ID = "wmbt2"
 FEET_TO_METERS = 0.3048
 KCFS_TO_CUBIC_METERS_PER_SECOND = 28.316846592
 MAX_OBSERVATIONS = 100
+REPLAY_DIR = Path(__file__).resolve().parent.parent / "data" / "replays"
 
 
 def fetch_noaa_json(url: str) -> dict:
@@ -235,6 +237,145 @@ def list_stations_in_bbox(west: float, south: float, east: float, north: float) 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "riverguard-api"}
+
+
+def load_replay(replay_id: str) -> dict:
+    if not re.fullmatch(r"[a-z0-9-]{3,80}", replay_id):
+        raise HTTPException(status_code=400, detail="Invalid replay ID")
+    path = REPLAY_DIR / f"{replay_id}.json"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Replay not found")
+    try:
+        return json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=500, detail="Replay fixture could not be loaded") from exc
+
+
+@app.get("/v1/replays")
+def list_replays():
+    """List bundled historic flood replays."""
+    replays = []
+    for path in sorted(REPLAY_DIR.glob("*.json")):
+        replay = load_replay(path.stem)
+        replays.append({
+            "replay_id": replay["replay_id"],
+            "name": replay["name"],
+            "station": replay["station"],
+            "period": replay["period"],
+            "target": replay["target"],
+            "data_quality": replay["data_quality"],
+        })
+    return {"count": len(replays), "replays": replays}
+
+
+@app.get("/v1/replays/{replay_id}")
+def replay(replay_id: str):
+    """Return a complete historic observation series for deterministic playback."""
+    return load_replay(replay_id)
+
+
+def confusion_metrics(rows: list[dict], method: str, threshold_time: datetime | None) -> dict:
+    tp = sum(row[method] and row["actual"] for row in rows)
+    fp = sum(row[method] and not row["actual"] for row in rows)
+    fn = sum(not row[method] and row["actual"] for row in rows)
+    tn = sum(not row[method] and not row["actual"] for row in rows)
+    precision = tp / (tp + fp) if tp + fp else None
+    recall = tp / (tp + fn) if tp + fn else None
+    lead_origins = [row["time"] for row in rows if row[method] and threshold_time and row["time"] < threshold_time]
+    lead_time = (
+        round((threshold_time - min(lead_origins)).total_seconds() / 60)
+        if lead_origins else None
+    )
+    return {
+        "true_positives": tp,
+        "false_positives": fp,
+        "false_negatives": fn,
+        "true_negatives": tn,
+        "precision": round(precision, 3) if precision is not None else None,
+        "recall": round(recall, 3) if recall is not None else None,
+        "false_alarm_rate": round(fp / (fp + tn), 3) if fp + tn else None,
+        "first_alert_lead_minutes": lead_time,
+    }
+
+
+def evaluate_replay(fixture: dict) -> dict:
+    parsed = [
+        {**row, "dt": datetime.fromisoformat(row["time"].replace("Z", "+00:00"))}
+        for row in fixture["observations"]
+    ]
+    horizon = timedelta(hours=fixture["target"]["horizon_hours"])
+    lookback = timedelta(hours=1)
+    threshold = fixture["target"]["threshold_m"]
+    origins = []
+    excluded = 0
+
+    for index, current in enumerate(parsed):
+        past = [row for row in parsed[:index + 1] if current["dt"] - lookback <= row["dt"]]
+        future = []
+        for row in parsed[index + 1:]:
+            if row["dt"] > current["dt"] + horizon:
+                break
+            future.append(row)
+        if len(past) < 3 or not future or future[-1]["dt"] < current["dt"] + horizon - timedelta(minutes=30):
+            excluded += 1
+            continue
+        if max((b["dt"] - a["dt"] for a, b in zip(past, past[1:])), default=timedelta()) > timedelta(minutes=45):
+            excluded += 1
+            continue
+        future_window = [current, *future]
+        if max((b["dt"] - a["dt"] for a, b in zip(future_window, future_window[1:])), default=timedelta()) > timedelta(hours=1):
+            excluded += 1
+            continue
+
+        xs = [(row["dt"] - past[0]["dt"]).total_seconds() / 3600 for row in past]
+        ys = [row["stage_m"] for row in past]
+        x_mean = sum(xs) / len(xs)
+        y_mean = sum(ys) / len(ys)
+        denominator = sum((x - x_mean) ** 2 for x in xs)
+        slope_per_hour = (
+            sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys)) / denominator
+            if denominator else 0.0
+        )
+        projected_peak = max(
+            current["stage_m"],
+            current["stage_m"] + slope_per_hour * horizon.total_seconds() / 3600,
+        )
+        origins.append({
+            "time": current["dt"],
+            "actual": any(row["stage_m"] >= threshold for row in future),
+            "persistence": current["stage_m"] >= threshold,
+            "trend": projected_peak >= threshold,
+        })
+
+    crossings = [row["dt"] for row in parsed if row["stage_m"] >= threshold]
+    first_crossing = min(crossings) if crossings else None
+    return {
+        "replay_id": fixture["replay_id"],
+        "station_id": fixture["station"]["noaa_id"],
+        "target": fixture["target"],
+        "evaluation": {
+            "forecast_origins_evaluated": len(origins),
+            "forecast_origins_excluded_for_gaps_or_warmup": excluded,
+            "positive_six_hour_windows": sum(row["actual"] for row in origins),
+            "first_observed_threshold_crossing": first_crossing.isoformat() if first_crossing else None,
+            "methods": {
+                "persistence": confusion_metrics(origins, "persistence", first_crossing),
+                "linear_trend_1h": confusion_metrics(origins, "trend", first_crossing),
+            },
+            "limitations": [
+                "Forecast windows overlap and are not independent samples.",
+                "Metrics describe these replay events only; they do not establish performance on unseen events.",
+                "Observation gaps and warm-up periods are excluded from scoring.",
+                "The linear trend is an illustrative baseline, not the deployed calibrated model.",
+            ],
+        },
+    }
+
+
+@app.get("/v1/replays/{replay_id}/evaluation")
+def replay_evaluation(replay_id: str):
+    """Compare persistence and one-hour trend baselines over six-hour horizons."""
+    return evaluate_replay(load_replay(replay_id))
 
 
 @app.get("/v1/stations/wimberley")
