@@ -31,13 +31,21 @@ Wimberley diagnostic performs poorly and the combined model transfers poorly.
 
 ## Reproduce the run
 
-From `backend/ml/` in a Python environment with scikit-learn:
+From the repository root, train through the canonical `ml` package import
+used by the serving image:
 
 ```sh
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-python train_replays.py
+python3 -m venv backend/ml/.venv
+. backend/ml/.venv/bin/activate
+python -m pip install -r backend/ml/requirements.txt
+PYTHONPATH=backend:. python -m ml.train_replays
+```
+
+Run the ML regression suite from the repository root with the same package
+identity:
+
+```sh
+PYTHONPATH=backend:. python -m unittest discover -s backend/ml/tests -v
 ```
 
 The script prints exact metrics, source file checksums, label counts and
@@ -48,9 +56,12 @@ it there.
 
 ## Evaluation status
 
-Run `python train_replays.py` to regenerate counts and metrics after applying
-the shared input validator. The command reports excluded training windows by
-reason alongside the metrics, source checksums and replay counts. Metrics from
+Run `PYTHONPATH=backend:. python -m ml.train_replays` to regenerate counts and
+metrics after applying the shared input validator. The command reports
+excluded training windows by reason alongside metrics, source checksums and
+replay counts. Artifacts record `ml.model.FittedRiskModel` as the canonical
+serialized class path, matching the service's `from ml.model import ...`
+loader. Metrics from
 earlier runs are not comparable because they did not enforce the full six-hour
 lookback quality contract. Report replay-specific results with the small event
 count and overlapping forecast origins in mind; they are not calibrated
@@ -96,7 +107,7 @@ reproducible by training from committed replay files.
 
 ```python
 from riverguard.data import load_stage
-from backend.ml.model import predict_risk, load_artifact
+from ml.model import predict_risk, load_artifact
 
 observations = load_stage("07019000", "2024-11-04", "2024-11-10")
 model = load_artifact("backend/artifacts/ml/USGS-07019000")
@@ -113,7 +124,7 @@ that deployment wiring separate.
 The saved Eureka artifact can be loaded with:
 
 ```python
-from backend.ml.model import load_artifact, predict_risk
+from ml.model import load_artifact, predict_risk
 
 model = load_artifact("backend/artifacts/ml/USGS-07019000")
 result = predict_risk(
