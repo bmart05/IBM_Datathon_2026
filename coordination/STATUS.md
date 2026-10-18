@@ -13,7 +13,7 @@ Review update at 15:56 UTC / 16:56 UK: A3's observed-flood correction is indepen
 | Real USGS data | Complete component, merged | Preserve source/quality/cutoff contract during integration |
 | Decision helpers | Complete component, merged | Verify API uses the helper and renders each state correctly |
 | Replay/demo tooling | Gap-aware, source/report-driven scripts merged | Strict candidate checks and real endpoint rehearsal |
-| ML | Validator/evaluation code exists; 7 tests independently pass | Fix reproduced cross-process artifact import bug, review/merge PR #14, load real artifact |
+| ML | Component and canonical artifact fix merged via PR #14; 8 ML tests independently pass | Validate trained artifact and inference in target runtime |
 | Backend | Existing trend/replay service works; new model contract is a stub | Wire validator, classifier, decision helper and deterministic replay route; verify combined API |
 | Frontend | Existing dashboard and gap-chart branch exist; syntax check independently passes for 1dc2db8 | Focused PR, state/null/legacy fixes, Eureka-only model panel and actual browser/API evidence |
 | IBM LinuxONE | Existing s390x trend service was reported healthy by A3 | Isolated ML dependency build, target train/save/reload, actual fitted inference and source/artifact proof |
@@ -21,19 +21,21 @@ Review update at 15:56 UTC / 16:56 UK: A3's observed-flood correction is indepen
 
 Review update at 15:59 UTC / 16:59 UK: API PR #16 advanced to 568a3f7 and now includes the ML directory; the old build-context omission is resolved. Agent 1 independently ran **71 combined tests, 39 subtests**, including actual ML validator API cases. Fitted inference still awaits the canonical artifact fix. A5 delivered strict rehearsal ba7a7ff; **45 existing tests pass**, but independent mutation probes find three false-pass cases (missing null-score field, out-of-range score, disabled human review). A1-0030 assigns concrete verifier fixes before merge, then candidate execution/evidence preparation. No new merge or deployment; overall completion estimate unchanged.
 
+Review update at 16:02 UTC / 17:02 UK: **ML PR #14 is merged** as c17ede11918e26e0c24b9b659443199cf0f97ea3, resolving the reproduced artifact module-identity blocker. The merged tree exactly matches the independently tested prospective result: **49 tests, 39 subtests passed**, including 8 ML tests and fresh-process save/load/predict. Local main is synchronized. A2 reports a full regenerated training/evaluation and three fitted fixture checks; those remain peer results. A3 now owns composing this reviewed package into PR #16 and proving actual target inference; A2 supports artifact metadata/runtime audit without new features. A5 must fix the strict-check false passes; A4's newer frontend/browser handoff remains outstanding. Component readiness improved; end-to-end/target-runtime/delivery readiness is still unverified, so the approximate-half integrated estimate remains conservative.
+
 ## What has actually passed
 
-- Main is `8e64a378d00203ecf26cb7b0bcf05b292bfe0d06`, including Agent 5's PRs #13 and #15.
+- Main is `c17ede11918e26e0c24b9b659443199cf0f97ea3`, including Agent 5's PRs #13/#15 and ML PR #14. Local main matches.
 - Agent 1 independently reviewed PR #15 and ran data + decision + demo suites: **41 tests passed, 39 subtests passed**. The merged main Git tree matches the tested b970e09 tree exactly.
 - Both replay scripts ran locally. Fourteen fixtures produced 34,231 usable trend-policy origins and 144 unavailable. Absent evaluation input and uncalled candidate endpoints are labelled explicitly.
-- ML PR #14 at d5646a2: seven regression tests independently pass, but a separate fresh-process artifact check **fails** with `ModuleNotFoundError: No module named 'model'`. It remains unmerged.
+- The original ML artifact import failure at d5646a2 was corrected at 23d8318. All eight ML tests independently pass, including a separate-process canonical save/load/predict test; PR #14 is merged. This is not target fitted-inference evidence.
 - The three selected Eureka source/validator cases are verified. This is not evidence that the candidate returns a fitted model score.
 - All four peer agents have acknowledged the communication receipt check. Newer task acceptance/progress must still be reported individually.
 
 ## Critical path
 
-1. A2 fixes artifact identity and provides passing fresh-process regression/evidence.
-2. A1 reviews that fix/combined tests and merges qualifying ML work.
+1. Completed: A2 fixed canonical artifact identity and supplied the fresh-process regression.
+2. Completed: A1 verified the combined result and merged ML PR #14.
 3. A3 completes adapters and isolated LinuxONE validation. Dependency/build feasibility and independent API tests proceed while the artifact fix is underway.
 4. A4 validates accurate dashboard states and the separate model panel against the same candidate. A5 runs strict three-point rehearsal against it.
 5. A1 verifies combined evidence, merges qualified changes and identifies any remaining release blockers. Shared-service promotion remains a separate deployment decision.
@@ -41,7 +43,7 @@ Review update at 15:59 UTC / 16:59 UK: API PR #16 advanced to 568a3f7 and now in
 
 ## Agent 1's active work
 
-Agent 1 is responsible for inspecting fixes/diffs, reproducing blockers, running meaningful tests on reviewed heads/merged candidates, reviewing frontend/API/ML handoffs, merging passing PRs, resolving shared interfaces, tracking runtime evidence and keeping this status accurate. Delegation does not replace that work. No fix to PR #14 has been posted yet at this snapshot, so the next actual ML review depends on A2's updated commit.
+Agent 1 is responsible for inspecting fixes/diffs, reproducing blockers, running meaningful tests on reviewed heads/merged candidates, reviewing frontend/API/ML handoffs, merging passing PRs, resolving shared interfaces, tracking runtime evidence and keeping this status accurate. Delegation does not replace that work. ML PR #14 is now reviewed/merged; the next queue is API/runtime evidence, A5's strict-check corrections and A4's frontend/browser handoff.
 
 ## Finish-and-request loop
 

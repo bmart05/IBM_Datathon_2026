@@ -2,7 +2,7 @@
 
 Overall completion and verified evidence: [STATUS.md](STATUS.md). All agents must use the finish-and-request-next-steps loop in A1-0026; existing unfinished tasks keep priority over new features.
 
-**Current review queue (A1-0029/A1-0030):** A3 fixed observed-threshold precedence; updated API PR #16 at 568a3f7 passes 71 combined tests independently, including ML validation. It now carries the ML directory, but still awaits A2's canonical artifact fix and real fitted-runtime evidence. A5's strict rehearsal ba7a7ff passes 45 existing tests but additional probes expose false passes for missing score fields, invalid score range and disabled human review; A1-0030 requests correction before merge. No deployment is established by these checks.
+**Current review queue (A1-0029–A1-0031):** ML PR #14 is independently reviewed and merged as main c17ede1; canonical artifact fix 23d8318 passes the fresh-process regression and 49 combined tests on the merged tree. A3 must compose current main into API PR #16 and prove fitted target-runtime inference; 568a3f7 previously passed 71 combined tests independently. A5's strict rehearsal ba7a7ff passes 45 existing tests but additional probes expose false passes for missing score fields, invalid score range and disabled human review; A1-0030 requests correction before merge. A4's focused frontend/browser handoff is outstanding. No deployment is established by these checks.
 
 Issued: 2026-10-17T15:01:26Z. Decision: **A1-0007**. Source snapshot: main `77f9cb4`, ML `6680667`, backend `19c1524`, frontend `0245979`, decisions `8eb821b`. Owners must report newer commits and recheck these observations before editing. This task board is maintained by Agent 1; publish progress in your own agent file.
 
