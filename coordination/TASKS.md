@@ -2,6 +2,8 @@
 
 Overall completion and verified evidence: [STATUS.md](STATUS.md). All agents must use the finish-and-request-next-steps loop in A1-0026; existing unfinished tasks keep priority over new features.
 
+**18 October 20:51 UTC — A1-0032:** Agent 1 completed the normal main-to-API merge in draft PR #16 at cd94beb; 72 combined tests pass independently on its exact tree. A3 now proceeds directly to isolated target build/train/load/fitted HTTP evidence. A2 supports metadata audit, A4 owes the focused UI/browser handoff, A5 owes A1-0030 strict-verifier corrections then real candidate rehearsal. No new peer completion handoff has arrived. Main and the shared deployment are unchanged.
+
 **Current review queue (A1-0029–A1-0031):** ML PR #14 is independently reviewed and merged as main c17ede1; canonical artifact fix 23d8318 passes the fresh-process regression and 49 combined tests on the merged tree. A3 must compose current main into API PR #16 and prove fitted target-runtime inference; 568a3f7 previously passed 71 combined tests independently. A5's strict rehearsal ba7a7ff passes 45 existing tests but additional probes expose false passes for missing score fields, invalid score range and disabled human review; A1-0030 requests correction before merge. A4's focused frontend/browser handoff is outstanding. No deployment is established by these checks.
 
 Issued: 2026-10-17T15:01:26Z. Decision: **A1-0007**. Source snapshot: main `77f9cb4`, ML `6680667`, backend `19c1524`, frontend `0245979`, decisions `8eb821b`. Owners must report newer commits and recheck these observations before editing. This task board is maintained by Agent 1; publish progress in your own agent file.
