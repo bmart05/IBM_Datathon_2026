@@ -17,6 +17,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
+from .model_contracts import (
+    EurekaModelRequest,
+    EurekaModelResponse,
+)
+from .model_service import predict_eureka_model as evaluate_eureka_model
+from .replay_contracts import ReplayPredictionRequest, ReplayPredictionResponse
+from .replay_service import predict_replay
+
 app = FastAPI(
     title="RiverGuard API",
     description="Flood-stage risk estimates and human-reviewed alert decisions.",
@@ -256,6 +264,12 @@ def health():
     return {"status": "ok", "service": "riverguard-api"}
 
 
+@app.post("/v1/model/predict", response_model=EurekaModelResponse)
+def predict_eureka_model(request: EurekaModelRequest):
+    """Experimental Eureka inference contract, isolated from legacy trends."""
+    return evaluate_eureka_model(request)
+
+
 def load_replay(replay_id: str) -> dict:
     if not re.fullmatch(r"[a-z0-9-]{3,80}", replay_id):
         raise HTTPException(status_code=400, detail="Invalid replay ID")
@@ -290,6 +304,12 @@ def list_replays():
 def replay(replay_id: str):
     """Return a complete historic observation series for deterministic playback."""
     return load_replay(replay_id)
+
+
+@app.post("/v1/replays/{replay_id}/predict", response_model=ReplayPredictionResponse)
+def predict_replay_policy(replay_id: str, request: ReplayPredictionRequest):
+    """Evaluate the trend baseline at a historical clock using fixture rows only."""
+    return predict_replay(load_replay(replay_id), request)
 
 
 def precision_recall_auc(rows: list[dict], method: str) -> float | None:

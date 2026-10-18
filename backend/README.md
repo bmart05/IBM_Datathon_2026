@@ -1,35 +1,55 @@
-# RiverGuard backend (starter)
+# RiverGuard backend
 
-Small FastAPI service intended for IBM LinuxONE. It includes `/health`, a `/v1/predict` trend-baseline endpoint, and NOAA integration for U.S. gauges. Wimberley (NOAA `WMBT2`, USGS `08171000`) remains the default demo station. It accepts the sensor sample interval. The returned risk number is explicitly marked uncalibrated; the baseline is for wiring the dashboard and proving deployment, and is **not a trained or calibrated flood model** and must not be used for operational decisions.
+The FastAPI service keeps the existing NOAA trend endpoints and source replay fixtures, and adds a separate Eureka-only experimental classifier contract. The trend heuristic and the classifier's six-hour new-crossing score are different outputs. Neither is a calibrated operational forecast; decisions require human review.
 
 ## Run locally
 
-```sh
-podman build -t riverguard-api:latest .
-podman run -d --name riverguard-api --restart=unless-stopped -p 8000:8000 riverguard-api:latest
-```
-
-Then visit `http://localhost:8000/docs`. Use `GET /v1/stations?west=-100&south=25&east=-93&north=37` to list NOAA gauges in a map viewport (each bounding-box side must be at most 12 degrees). Then call `GET /v1/stations/{station_id}` for normalized observations, official forecast, and flood thresholds, or `GET /v1/stations/{station_id}/predict?policy=balanced` to run the baseline for that gauge. NOAA station IDs may be LIDs such as `WMBT2` or `08171000`. Stage and flow are converted to metres and cubic metres/second. The Wimberley shortcuts remain at `/v1/stations/wimberley` and `/v1/stations/wimberley/predict`. Larger areas should be requested as multiple map viewports, which keeps NOAA listing requests responsive. Historical replay endpoints are `GET /v1/replays`, `GET /v1/replays/{replay_id}`, `GET /v1/replays/{replay_id}/evaluation`, and `GET /v1/replays/evaluation/summary`. Fourteen replay fixtures cover eight flood-event windows and six event-free controls at Wimberley, Texas; Eureka, Missouri; and Kerrville, Texas. They use timestamped USGS observations and NOAA minor-flood thresholds; the July 2025 Kerrville fixture adds an independently gauged flash-flood event to the chronological holdout. Per-replay evaluation includes event detection, warning lead, PR-AUC, and six-hour peak-stage MAE. The summary reports a fixed 2024 chronological holdout, false-alert episodes per event-free month using control-period exposure, and held-out Brier/ECE scores from an experimental isotonic calibration fitted on pre-2024 windows. Forecast windows overlap; metrics remain descriptive, and the baselines do not fit parameters. Only three held-out flood episodes at two gauges are currently available, so event-level uncertainty and cross-region generalization remain weak. The experimental calibration is not used by the live prediction endpoint. Rebuild any fixture with `python scripts/build_replays.py <replay-id> --output-dir data/replays`, using an ID from `GET /v1/replays`. The generic demo endpoint remains available; for example:
+From the repository root, build and run the API image:
 
 ```sh
-curl -sS http://localhost:8000/v1/predict \
-  -H 'content-type: application/json' \
-  -d '{"station_id":"demo-gauge","observed_at":"2026-10-17T12:00:00Z","recent_heights_m":[1.10,1.12,1.16,1.21,1.29,1.38,1.50],"flood_stage_m":1.8,"policy":"balanced"}'
+podman build -f backend/Dockerfile -t riverguard-api:candidate .
+podman run --rm -p 8000:8000 riverguard-api:candidate
 ```
 
-## Deploy to LinuxONE
+Open `http://localhost:8000/docs`. The image needs the complete repository as its build context because it packages `backend/app`, replay fixtures, `backend/ml`, and the shared `riverguard/data` module.
 
-The host needs rootless Podman (available on the configured LinuxONE account). From this directory:
+## API routes
+
+The existing `GET /v1/stations`, `GET /v1/stations/{identifier}`, `GET /v1/stations/{identifier}/predict`, `POST /v1/predict`, and historic replay/evaluation endpoints remain available. NOAA stage and flow values are converted to metres and cubic metres per second.
+
+`POST /v1/replays/{replay_id}/predict` evaluates the existing linear-trend baseline against the server-side fixture at a supplied historical clock. Send `{ "as_of": "2024-11-05T19:45:00Z", "policy": "balanced" }`. The endpoint uses only fixture observations at or before `as_of`, preserves actual timestamps, and reports missing, unapproved, gappy, stale, or conflicting history as `decision_state: "data_unavailable"` with a named `fallback`. A valid response includes the baseline `predicted_peak_m` and `probability_exceedance` plus `decision_state`, `policy_threshold`, `rationale`, and data-quality details. The trend score is explicitly uncalibrated.
+
+`POST /v1/model/predict` accepts timestamped Eureka observations with `stage_ft`, approval status, and qualifier, together with `as_of`, `sample_interval_minutes`, `flood_stage_ft: 19`, and an optional policy. Only `ERKM7` / `07019000` is supported. The six-hour ML history must be complete, fresh at the declared cadence, and source-approved; rows after `as_of` cannot affect the result. `crossing_probability` is an experimental score for a new upward crossing, never a predicted peak and never the trend endpoint's `probability_exceedance`. Responses mark it uncalibrated and require human review. A missing artifact or unusable history returns a null score and a named fallback. The separately reported measured stage may still show an observed threshold exceedance when its timestamp and source quality are valid.
+
+The model runtime loads its artifact from `/srv/riverguard/artifacts/ml/USGS-07019000` by default. Set `RIVERGUARD_MODEL_DIR` to override that directory. Keep generated artifacts outside Git and regenerate them inside the target `s390x` runtime after the ML owner’s canonical training/serving import fix is merged. The ML README records the authoritative training command and artifact metadata.
+
+## LinuxONE candidate
+
+The LinuxONE image uses Python 3.12 and pins NumPy 2.5.4, pandas 3.0.6, scikit-learn 1.9.1, and joblib 1.6.0. PyPI did not provide compatible s390x wheels for the scientific packages during the check; an isolated disposable LinuxONE container successfully built and imported these versions from source with `build-essential`, `gfortran`, OpenBLAS, LAPACK, and `pkg-config`. The candidate image includes those build prerequisites so the result can be reproduced on the target architecture.
+
+Sync the repository root to a separate candidate directory on the server. From that directory, build with:
 
 ```sh
-ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'mkdir -p ~/riverguard-backend'
-rsync -avz -e 'ssh -i ~/Downloads/yoyo12.pem' ./ linux1@148.100.77.165:~/riverguard-backend/
-ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'cd ~/riverguard-backend && podman build -t riverguard-api:latest .'
-ssh -i ~/Downloads/yoyo12.pem linux1@148.100.77.165 'podman rm -f riverguard-api 2>/dev/null || true; podman run -d --name riverguard-api --restart=unless-stopped -e CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 -p 8000:8000 riverguard-api:latest'
+podman build -f backend/Dockerfile -t riverguard-api:candidate .
 ```
 
-The process listens on server port 8000, but inbound 8000 is not allowed by the current host firewall. For a demo, create an SSH tunnel with `ssh -i ~/Downloads/yoyo12.pem -L 8001:127.0.0.1:8000 linux1@148.100.77.165`, then open `http://localhost:8001/docs` (port 8000 is already occupied locally). To make it directly reachable, add an inbound firewall/security-group rule for the demo client and use TLS before broader exposure. Container builds on LinuxONE use the native `s390x` Python image. Runtime dependencies avoid optional native extensions because the server build image has no compiler installed.
+After generating the ML artifact inside the `s390x` image using the current `backend/ml/README.md` instructions, start the candidate bound only to loopback port 8002 and mount the artifact directory read-only:
 
-## Next backend step
+```sh
+podman run -d --name riverguard-api-candidate --restart=unless-stopped \
+  -p 127.0.0.1:8002:8000 \
+  -e RIVERGUARD_MODEL_DIR=/srv/riverguard/artifacts/ml/USGS-07019000 \
+  -v ~/riverguard-artifacts:/srv/riverguard/artifacts:ro \
+  riverguard-api:candidate
+```
 
-The summary endpoint uses a 2024 chronological cutoff. Its held-out floods now include the July 2025 Kerrville event on an independent gauge, alongside the Eureka events, but three held-out flood episodes are still too few to establish cross-region performance. Add more independent flood events and longer approved control exposure before treating the results as generalizable. The isotonic calibration is experimental and evaluation-only. Replace the live trend baseline only after a model artifact and feature pipeline have been evaluated with flood episodes kept together across chronological development and held-out periods. Keep forecast probability separate from alert-policy thresholds and expose model provenance.
+Check `http://127.0.0.1:8002/health` on the server, then tunnel it with `ssh -L 8002:127.0.0.1:8002 linux1@148.100.77.165` and open `http://localhost:8002/docs`. The existing shared service on port 8000 stays running while the candidate is built and tested. Replacing that shared service is a separate promotion step and requires the existing human approval.
+
+Stop or remove only the candidate container to roll it back:
+
+```sh
+podman stop riverguard-api-candidate
+podman rm riverguard-api-candidate
+```
+
+The candidate image and actual model inference still need to be built and verified on `s390x` after the reviewed ML package is available. A successful dependency source-build check alone does not count as an API candidate or model-inference test.
